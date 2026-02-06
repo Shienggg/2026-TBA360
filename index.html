@@ -2,11 +2,12 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+    
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval'; script-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>TBA360 戰情室 v13</title>
+    <title>TBA360 戰情室 v14</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; padding-top: 50px; min-height: 100vh; margin: 0; }
@@ -50,7 +51,7 @@
             </div>
             <input type="number" id="f_weight" step="0.1" placeholder="體重 (kg)">
             <div style="margin-top:10px; border:1px dashed #444; padding:10px; border-radius:8px;">
-                <label style="color:#aaa; font-size:0.9rem;">📸 圖片 (自動壓縮)</label>
+                <label for="f_img_file" style="color:#aaa; font-size:0.9rem;">📸 圖片 (自動壓縮)</label>
                 <input type="file" id="f_img_file" accept="image/*" style="margin-top:5px;">
             </div>
             <textarea id="f_note" placeholder="心得..." rows="3"></textarea>
@@ -68,9 +69,12 @@
     </div>
 
     <script>
-        // ▼▼▼ 請務必確認這裡的網址有加引號，且結尾是 /exec ▼▼▼
+        // ==========================================
+        // ▼▼▼ 把你的 Google Apps Script 網址貼在下面引號內 ▼▼▼
         var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec"; 
-        var LOCAL_KEY = "TBA360_V13_DEBUG";
+        // ==========================================
+
+        var LOCAL_KEY = "TBA360_V14_FINAL";
 
         try {
             var target = new Date(2026, 10, 13).getTime();
@@ -97,7 +101,6 @@
         };
 
         function processForm() {
-            // 鎖定按鈕避免重複按
             var btn = document.getElementById('subBtn');
             btn.innerText = "處理中...";
             btn.disabled = true;
@@ -143,16 +146,14 @@
                 items.unshift(entry);
                 localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
                 
-                // 這裡使用了 try-catch 包裹 render，確保就算圖表壞掉，也不會影響後面上傳
-                try { render(); } catch(err) { console.error("圖表繪製錯誤 (不影響存檔):", err); }
+                try { render(); } catch(err) { console.error("Chart Error ignored"); }
                 
             } catch(e) {
-                alert("本機存檔失敗 (空間不足?)");
+                alert("本機存檔失敗");
             }
 
             // 2. 雲端上傳
             if (GAS_URL && GAS_URL.startsWith("http")) {
-                // 使用 no-cors 模式嘗試避免跨域錯誤，或標準模式
                 fetch(GAS_URL, {
                     method: "POST",
                     body: JSON.stringify(entry)
@@ -163,8 +164,7 @@
                     resetForm();
                 })
                 .catch(err => {
-                    console.error("雲端錯誤細節:", err);
-                    alert("✅ 本機成功，但 ⚠️ 雲端失敗。請檢查網址或 Apps Script 部署。");
+                    alert("✅ 本機成功，但 ⚠️ 雲端失敗 (請檢查網址)");
                     resetForm();
                 });
             } else {
@@ -185,7 +185,6 @@
             var raw = localStorage.getItem(LOCAL_KEY);
             var items = raw ? JSON.parse(raw) : [];
             
-            // 渲染列表
             var container = document.getElementById('logContainer');
             container.innerHTML = items.length ? "" : "<p style='text-align:center; color:#555;'>暫無紀錄</p>";
             var lv = Math.floor(items.length / 5) + 1;
@@ -198,41 +197,4 @@
                 div.innerHTML = "<div style='display:flex; justify-content:space-between;'><b>📅 " + it.date + "</b><span>" + it.knee + "</span></div>" +
                     (it.img ? '<img src="'+it.img+'" class="log-img">' : '') +
                     "<p style='color:#ddd;'>" + (it.note || "") + "</p>" +
-                    "<div style='font-size:0.8rem; color:#888;'>💤 " + it.sleep + " | ⚖️ " + it.weight + "kg</div>";
-                container.appendChild(div);
-            });
-
-            // 2. 繪製圖表 (修復版：先銷毀舊圖表)
-            drawChart(items);
-        }
-
-        function drawChart(items) {
-            if (typeof Chart === "undefined") return;
-            var ctx = document.getElementById('chartCanvas').getContext('2d');
-            
-            // ★★★ 關鍵修復：檢查並銷毀已存在的圖表實例 ★★★
-            var existingChart = Chart.getChart("chartCanvas");
-            if (existingChart) {
-                existingChart.destroy();
-            }
-
-            var d = items.slice().reverse().slice(-7);
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: d.map(function(x){ return x.date.substr(5); }),
-                    datasets: [
-                        { label: '睡眠', data: d.map(function(x){ return x.sleep; }), borderColor: '#39ff14', borderWidth: 2 },
-                        { label: '體重', data: d.map(function(x){ return x.weight; }), borderColor: '#00f2ff', borderWidth: 2 }
-                    ]
-                },
-                options: { 
-                    responsive: true, 
-                    scales: { y: { grid: { color: '#333' } }, x: { grid: { display: false } } }, 
-                    plugins: { legend: { labels: { color: '#fff' } } } 
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+                    "<div style='font-size:0.8rem; color:#888;'>💤 " + it.sleep + " | ⚖
