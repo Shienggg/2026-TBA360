@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>TBA360 v15</title>
+    <title>TBA360 v16 Sync</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; padding-top: 50px; min-height: 100vh; margin: 0; }
@@ -16,32 +16,28 @@
         #xpBar { height: 100%; background: #00f2ff; width: 0%; transition: 0.5s; }
         input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 8px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
         button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: #000; border: none; font-weight: bold; font-size: 1.1rem; border-radius: 8px; }
-        .log-item { border: 1px solid #333; padding: 15px; margin-top: 10px; background: #1a1a1a; border-radius: 8px; }
+        .log-item { border: 1px solid #333; padding: 15px; margin-top: 10px; background: #1a1a1a; border-radius: 8px; position: relative; }
         .log-img { width: 100%; max-height: 300px; object-fit: cover; border-radius: 6px; margin: 10px 0; }
         .status-dot { height: 10px; width: 10px; background-color: #555; border-radius: 50%; display: inline-block; margin-right: 5px; }
         .status-active { background-color: #39ff14; box-shadow: 0 0 5px #39ff14; }
+        .source-tag { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
+        .tag-cloud { background: #004400; color: #39ff14; border: 1px solid #39ff14; }
+        .tag-local { background: #444400; color: #ffff00; border: 1px solid #ffff00; }
         
-        /* 手機除錯視窗 */
-        #debug-console { 
-            width: 100%; max-width: 500px; height: 100px; background: #220000; color: #ffaaaa; 
-            font-family: monospace; font-size: 10px; overflow-y: scroll; padding: 10px; 
-            border: 1px solid #f00; display: none; margin-top: 20px;
-        }
+        #loading-indicator { text-align: center; color: #00f2ff; font-size: 0.9rem; margin: 10px 0; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="debug-console"></div>
-
     <div class="pixel-box">
         <div style="display:flex; justify-content:space-between;">
             <span id="lvDisplay" style="color:#00f2ff; font-weight:bold;">Lv.1 騎士</span>
-            <span style="font-size: 0.8rem; color: #888;">v15.0 (Mobile Fix)</span>
+            <span style="font-size: 0.8rem; color: #888;">v16.0 (Cloud Sync)</span>
         </div>
         <div class="xp-bg"><div id="xpBar"></div></div>
         <div class="timer-val" id="timerDisp">---</div>
         <div style="text-align:center; font-size:0.8rem; color:#aaa;">
-            <span id="cloudStatus" class="status-dot"></span><span id="cloudText">單機模式</span>
+            <span id="cloudStatus" class="status-dot"></span><span id="cloudText">初始化中...</span>
         </div>
     </div>
 
@@ -72,42 +68,23 @@
     </div>
 
     <div class="pixel-box">
-        <h2 style="margin-top:0;">➤ 歷史紀錄 (本機)</h2>
+        <h2 style="margin-top:0;">➤ 歷史紀錄</h2>
+        <div id="loading-indicator">☁️ 正在從雲端下載資料...</div>
         <div id="logContainer"></div>
     </div>
 
     <script>
-        // ▼▼▼ 除錯工具：攔截所有錯誤顯示在螢幕上 ▼▼▼
-        window.onerror = function(msg, url, lineNo, columnNo, error) {
-            var debugBox = document.getElementById('debug-console');
-            debugBox.style.display = 'block';
-            debugBox.innerHTML += "🔴 Err: " + msg + " (Line: " + lineNo + ")<br>";
-            return false;
-        };
-        function log(msg) {
-            console.log(msg);
-            // Uncomment next line to see logs on screen
-            // document.getElementById('debug-console').style.display = 'block';
-            // document.getElementById('debug-console').innerHTML += "🟢 " + msg + "<br>";
-        }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
         // ==========================================
-        var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec"; // 請填入你的 Google Apps Script 網址
+        var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec"; // ★★★ 請務必填入你的 Google Apps Script 網址 (結尾 /exec) ★★★
         // ==========================================
 
-        var LOCAL_KEY = "TBA360_V15_MOBILE";
+        var LOCAL_KEY = "TBA360_V16_SYNC";
 
         window.onload = function() {
-            try {
-                initApp();
-            } catch(e) {
-                alert("初始化失敗: " + e);
-            }
+            initApp();
         };
 
         function initApp() {
-            log("App Starting...");
             var today = new Date();
             document.getElementById('f_date').value = today.toISOString().substr(0, 10);
             
@@ -117,55 +94,127 @@
                 var diff = target - new Date().getTime();
                 var days = Math.floor(diff / (1000 * 60 * 60 * 24));
                 document.getElementById('timerDisp').innerHTML = (days > 0 ? days : 0) + "<span style='font-size:1rem; color:#fff'> DAYS</span>";
-            } catch(e) { log("Timer Error"); }
+            } catch(e) {}
 
-            // 檢查雲端
+            // 1. 先顯示本機資料 (避免畫面空白)
+            renderLocal();
+
+            // 2. 啟動雲端同步
             if (GAS_URL && GAS_URL.startsWith("http")) {
                 document.getElementById('cloudStatus').classList.add('status-active');
-                document.getElementById('cloudText').innerText = "雲端連線就緒";
+                document.getElementById('cloudText').innerText = "雲端連線中...";
+                fetchCloudData(); // <--- 這是 v16 的關鍵：去讀資料！
+            } else {
+                document.getElementById('cloudText').innerText = "單機模式";
             }
 
-            render();
-
-            // 綁定按鈕 (不使用 form onsubmit，改用 click 以便控制)
             document.getElementById('subBtn').onclick = function(e) {
-                e.preventDefault(); // 阻止表單預設送出
+                e.preventDefault();
                 processForm();
             };
         }
 
+        // 從雲端讀取資料 (GET)
+        function fetchCloudData() {
+            document.getElementById('loading-indicator').style.display = 'block';
+            
+            fetch(GAS_URL)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('cloudText').innerText = "同步完成";
+                // 雲端資料回來了！我們優先顯示雲端資料 (因為那是最完整的)
+                if (data && data.length > 0) {
+                    renderCloud(data);
+                } else {
+                    // 如果雲端沒資料，維持顯示本機
+                    console.log("雲端無資料");
+                }
+            })
+            .catch(err => {
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('cloudText').innerText = "同步失敗 (顯示本機)";
+                console.error("Fetch Error:", err);
+            });
+        }
+
+        // 渲染雲端資料
+        function renderCloud(items) {
+            var container = document.getElementById('logContainer');
+            container.innerHTML = ""; // 清空本機資料，改顯示雲端
+
+            updateLevel(items.length);
+
+            items.forEach(function(it) {
+                var div = document.createElement('div');
+                div.className = "log-item";
+                div.innerHTML = 
+                    "<span class='source-tag tag-cloud'>CLOUD</span>" +
+                    "<div style='display:flex; justify-content:space-between;'><b>📅 " + it.date + "</b><span>" + it.knee + "</span></div>" +
+                    (it.img ? '<img src="'+it.img+'" class="log-img">' : '') +
+                    "<p style='color:#ddd;'>" + (it.note || "") + "</p>" +
+                    "<div style='font-size:0.8rem; color:#888;'>💤 " + it.sleep + " | ⚖️ " + it.weight + "kg</div>";
+                container.appendChild(div);
+            });
+            drawChart(items);
+        }
+
+        // 渲染本機資料 (備案)
+        function renderLocal() {
+            var raw = localStorage.getItem(LOCAL_KEY);
+            var items = raw ? JSON.parse(raw) : [];
+            if (items.length === 0) return;
+
+            updateLevel(items.length);
+            var container = document.getElementById('logContainer');
+            container.innerHTML = "";
+            
+            items.forEach(function(it) {
+                var div = document.createElement('div');
+                div.className = "log-item";
+                div.innerHTML = 
+                    "<span class='source-tag tag-local'>LOCAL</span>" +
+                    "<div style='display:flex; justify-content:space-between;'><b>📅 " + it.date + "</b><span>" + it.knee + "</span></div>" +
+                    (it.img ? '<img src="'+it.img+'" class="log-img">' : '') +
+                    "<p style='color:#ddd;'>" + (it.note || "") + "</p>" +
+                    "<div style='font-size:0.8rem; color:#888;'>💤 " + it.sleep + " | ⚖️ " + it.weight + "kg</div>";
+                container.appendChild(div);
+            });
+            drawChart(items);
+        }
+
+        function updateLevel(count) {
+            var lv = Math.floor(count / 5) + 1;
+            document.getElementById('lvDisplay').innerHTML = "Lv." + lv + " 騎士";
+            document.getElementById('xpBar').style.width = (count % 5) * 20 + "%";
+        }
+
         function processForm() {
             var btn = document.getElementById('subBtn');
-            btn.innerText = "處理中...";
+            btn.innerText = "上傳中...";
             btn.disabled = true;
 
-            try {
-                var file = document.getElementById('f_img_file').files[0];
-                if (file) {
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        var img = new Image();
-                        img.onload = function() {
-                            var canvas = document.createElement('canvas');
-                            var ctx = canvas.getContext('2d');
-                            var maxDim = 450;
-                            var w = img.width; var h = img.height;
-                            if (w > h) { if (w > maxDim) { h *= maxDim/w; w = maxDim; } } 
-                            else { if (h > maxDim) { w *= maxDim/h; h = maxDim; } }
-                            canvas.width = w; canvas.height = h;
-                            ctx.drawImage(img, 0, 0, w, h);
-                            saveData(canvas.toDataURL('image/jpeg', 0.6));
-                        };
-                        img.src = e.target.result;
+            var file = document.getElementById('f_img_file').files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = new Image();
+                    img.onload = function() {
+                        var canvas = document.createElement('canvas');
+                        var ctx = canvas.getContext('2d');
+                        var maxDim = 450;
+                        var w = img.width; var h = img.height;
+                        if (w > h) { if (w > maxDim) { h *= maxDim/w; w = maxDim; } } 
+                        else { if (h > maxDim) { w *= maxDim/h; h = maxDim; } }
+                        canvas.width = w; canvas.height = h;
+                        ctx.drawImage(img, 0, 0, w, h);
+                        saveData(canvas.toDataURL('image/jpeg', 0.6));
                     };
-                    reader.readAsDataURL(file);
-                } else {
-                    saveData("");
-                }
-            } catch(e) {
-                alert("圖片處理錯誤: " + e);
-                btn.innerText = "重試";
-                btn.disabled = false;
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                saveData("");
             }
         }
 
@@ -179,39 +228,32 @@
                 img: imgData
             };
 
-            // 1. 本機存檔
-            try {
-                var raw = localStorage.getItem(LOCAL_KEY);
-                var items = raw ? JSON.parse(raw) : [];
-                items.unshift(entry);
-                localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
-                render();
-            } catch(e) {
-                alert("本機存檔失敗: " + e);
-            }
+            // 1. 本機存檔 (立即回饋)
+            var raw = localStorage.getItem(LOCAL_KEY);
+            var items = raw ? JSON.parse(raw) : [];
+            items.unshift(entry);
+            localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
+            renderLocal(); // 先顯示本機，讓使用者覺得很快
 
-            // 2. 雲端上傳 (針對 iPhone 優化)
+            // 2. 雲端上傳
             if (GAS_URL && GAS_URL.startsWith("http")) {
-                // iPhone 關鍵修正：使用 text/plain 避免 Preflight 檢查
                 fetch(GAS_URL, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "text/plain;charset=utf-8"
-                    },
+                    headers: { "Content-Type": "text/plain;charset=utf-8" }, // iPhone 修正
                     body: JSON.stringify(entry)
                 })
                 .then(res => res.json())
                 .then(data => {
-                    alert("✅ 本機 + ☁️ 雲端同步成功！");
+                    alert("✅ 同步成功！");
                     resetForm();
+                    fetchCloudData(); // 上傳完後，重新抓一次最新的雲端資料來顯示
                 })
                 .catch(err => {
-                    // 如果是 fetch 失敗，通常會在 console，但在這裡我們嘗試抓取
-                    alert("✅ 本機成功，但 ⚠️ 雲端失敗: " + err);
+                    alert("⚠️ 已存入本機，但雲端連線失敗");
                     resetForm();
                 });
             } else {
-                alert("✅ 本機儲存成功");
+                alert("✅ 已存入本機");
                 resetForm();
             }
         }
@@ -224,43 +266,13 @@
             btn.disabled = false;
         }
 
-        function render() {
-            var raw = localStorage.getItem(LOCAL_KEY);
-            var items = raw ? JSON.parse(raw) : [];
-            
-            var container = document.getElementById('logContainer');
-            container.innerHTML = items.length ? "" : "<p style='text-align:center; color:#555;'>暫無紀錄</p>";
-            var lv = Math.floor(items.length / 5) + 1;
-            document.getElementById('lvDisplay').innerHTML = "Lv." + lv + " 騎士";
-            document.getElementById('xpBar').style.width = (items.length % 5) * 20 + "%";
-
-            items.forEach(function(it) {
-                var div = document.createElement('div');
-                div.className = "log-item";
-                div.innerHTML = "<div style='display:flex; justify-content:space-between;'><b>📅 " + it.date + "</b><span>" + it.knee + "</span></div>" +
-                    (it.img ? '<img src="'+it.img+'" class="log-img">' : '') +
-                    "<p style='color:#ddd;'>" + (it.note || "") + "</p>" +
-                    "<div style='font-size:0.8rem; color:#888;'>💤 " + it.sleep + " | ⚖️ " + it.weight + "kg</div>";
-                container.appendChild(div);
-            });
-
-            try {
-                drawChart(items);
-            } catch(e) {
-                log("Chart Error: " + e);
-            }
-        }
-
         function drawChart(items) {
             if (typeof Chart === "undefined") return;
             var ctx = document.getElementById('chartCanvas').getContext('2d');
-            
             var existingChart = Chart.getChart("chartCanvas");
             if (existingChart) existingChart.destroy();
 
             var d = items.slice().reverse().slice(-7);
-            
-            // 針對手機版圖表配置優化
             new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -272,7 +284,7 @@
                 },
                 options: { 
                     responsive: true, 
-                    maintainAspectRatio: false, // 手機版不強制比例，避免跑版
+                    maintainAspectRatio: false,
                     scales: { y: { grid: { color: '#333' } }, x: { grid: { display: false } } }, 
                     plugins: { legend: { labels: { color: '#fff' } } } 
                 }
