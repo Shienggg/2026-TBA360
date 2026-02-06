@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>TBA360 混合戰情室</title>
+    <title>TBA360 戰情室 v13</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; padding-top: 50px; min-height: 100vh; margin: 0; }
@@ -32,7 +32,7 @@
         <div class="xp-bg"><div id="xpBar"></div></div>
         <div class="timer-val" id="timerDisp">---</div>
         <div style="text-align:center; font-size:0.8rem; color:#aaa;">
-            <span id="cloudStatus" class="status-dot"></span><span id="cloudText">單機模式 (未設定雲端)</span>
+            <span id="cloudStatus" class="status-dot"></span><span id="cloudText">單機模式</span>
         </div>
     </div>
 
@@ -68,30 +68,24 @@
     </div>
 
     <script>
-        // ==========================================
-        // ▼▼▼ 設定區域 (請將網址貼在引號中間) ▼▼▼
+        // ▼▼▼ 請務必確認這裡的網址有加引號，且結尾是 /exec ▼▼▼
         var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec"; 
-        // 例如： var GAS_URL = "https://script.google.com/...";
-        // ==========================================
+        var LOCAL_KEY = "TBA360_V13_DEBUG";
 
-        var LOCAL_KEY = "TBA360_V12_SAFE";
-
-        // 1. 倒數計時 (獨立執行，保證不壞)
         try {
             var target = new Date(2026, 10, 13).getTime();
             var diff = target - new Date().getTime();
             var days = Math.floor(diff / (1000 * 60 * 60 * 24));
             document.getElementById('timerDisp').innerHTML = (days > 0 ? days : 0) + "<span style='font-size:1rem; color:#fff'> DAYS</span>";
-        } catch(e) { document.getElementById('timerDisp').innerHTML = "Err"; }
+        } catch(e) {}
 
         window.onload = function() {
             var today = new Date();
             document.getElementById('f_date').value = today.toISOString().substr(0, 10);
             
-            // 檢查雲端設定
             if (GAS_URL && GAS_URL.startsWith("http")) {
                 document.getElementById('cloudStatus').classList.add('status-active');
-                document.getElementById('cloudText').innerText = "雲端連線就緒 (雙重存檔)";
+                document.getElementById('cloudText').innerText = "雲端連線就緒";
             }
 
             render();
@@ -103,8 +97,10 @@
         };
 
         function processForm() {
-            document.getElementById('subBtn').innerText = "處理中...";
-            document.getElementById('subBtn').disabled = true;
+            // 鎖定按鈕避免重複按
+            var btn = document.getElementById('subBtn');
+            btn.innerText = "處理中...";
+            btn.disabled = true;
 
             var file = document.getElementById('f_img_file').files[0];
             if (file) {
@@ -140,30 +136,39 @@
                 img: imgData
             };
 
-            // 1. 先存本機 (保證成功)
-            var raw = localStorage.getItem(LOCAL_KEY);
-            var items = raw ? JSON.parse(raw) : [];
-            items.unshift(entry);
-            localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
-            render();
+            // 1. 本機存檔
+            try {
+                var raw = localStorage.getItem(LOCAL_KEY);
+                var items = raw ? JSON.parse(raw) : [];
+                items.unshift(entry);
+                localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
+                
+                // 這裡使用了 try-catch 包裹 render，確保就算圖表壞掉，也不會影響後面上傳
+                try { render(); } catch(err) { console.error("圖表繪製錯誤 (不影響存檔):", err); }
+                
+            } catch(e) {
+                alert("本機存檔失敗 (空間不足?)");
+            }
 
-            // 2. 嘗試傳雲端 (如果有設定)
+            // 2. 雲端上傳
             if (GAS_URL && GAS_URL.startsWith("http")) {
+                // 使用 no-cors 模式嘗試避免跨域錯誤，或標準模式
                 fetch(GAS_URL, {
                     method: "POST",
                     body: JSON.stringify(entry)
                 })
                 .then(res => res.json())
                 .then(data => {
-                    alert("✅ 本機儲存成功 + ☁️ 雲端同步成功！");
+                    alert("✅ 本機 + ☁️ 雲端同步成功！");
                     resetForm();
                 })
                 .catch(err => {
-                    alert("✅ 本機儲存成功，但 ⚠️ 雲端連線失敗 (請檢查網址)");
+                    console.error("雲端錯誤細節:", err);
+                    alert("✅ 本機成功，但 ⚠️ 雲端失敗。請檢查網址或 Apps Script 部署。");
                     resetForm();
                 });
             } else {
-                alert("✅ 本機儲存成功 (未設定雲端)");
+                alert("✅ 本機儲存成功");
                 resetForm();
             }
         }
@@ -171,20 +176,22 @@
         function resetForm() {
             document.getElementById('mainForm').reset();
             document.getElementById('f_date').value = new Date().toISOString().substr(0, 10);
-            document.getElementById('subBtn').innerText = "確認紀錄";
-            document.getElementById('subBtn').disabled = false;
+            var btn = document.getElementById('subBtn');
+            btn.innerText = "確認紀錄";
+            btn.disabled = false;
         }
 
         function render() {
             var raw = localStorage.getItem(LOCAL_KEY);
             var items = raw ? JSON.parse(raw) : [];
+            
+            // 渲染列表
+            var container = document.getElementById('logContainer');
+            container.innerHTML = items.length ? "" : "<p style='text-align:center; color:#555;'>暫無紀錄</p>";
             var lv = Math.floor(items.length / 5) + 1;
             document.getElementById('lvDisplay').innerHTML = "Lv." + lv + " 騎士";
             document.getElementById('xpBar').style.width = (items.length % 5) * 20 + "%";
 
-            var container = document.getElementById('logContainer');
-            container.innerHTML = items.length ? "" : "<p style='text-align:center; color:#555;'>暫無紀錄</p>";
-            
             items.forEach(function(it) {
                 var div = document.createElement('div');
                 div.className = "log-item";
@@ -194,12 +201,21 @@
                     "<div style='font-size:0.8rem; color:#888;'>💤 " + it.sleep + " | ⚖️ " + it.weight + "kg</div>";
                 container.appendChild(div);
             });
+
+            // 2. 繪製圖表 (修復版：先銷毀舊圖表)
             drawChart(items);
         }
 
         function drawChart(items) {
             if (typeof Chart === "undefined") return;
             var ctx = document.getElementById('chartCanvas').getContext('2d');
+            
+            // ★★★ 關鍵修復：檢查並銷毀已存在的圖表實例 ★★★
+            var existingChart = Chart.getChart("chartCanvas");
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
             var d = items.slice().reverse().slice(-7);
             new Chart(ctx, {
                 type: 'line',
@@ -210,12 +226,13 @@
                         { label: '體重', data: d.map(function(x){ return x.weight; }), borderColor: '#00f2ff', borderWidth: 2 }
                     ]
                 },
-                options: { responsive: true, scales: { y: { grid: { color: '#333' } }, x: { grid: { display: false } } }, plugins: { legend: { labels: { color: '#fff' } } } }
+                options: { 
+                    responsive: true, 
+                    scales: { y: { grid: { color: '#333' } }, x: { grid: { display: false } } }, 
+                    plugins: { legend: { labels: { color: '#fff' } } } 
+                }
             });
         }
     </script>
 </body>
 </html>
-
-
-
