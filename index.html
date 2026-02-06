@@ -5,25 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>TBA360 雲端戰情室</title>
+    <title>TBA360 混合戰情室</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* (維持原本 v11 的 CSS 樣式，這裡省略以節省篇幅，請保留你原本 v11 的 style 區塊) */
         body { background: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; padding-top: 50px; min-height: 100vh; margin: 0; }
         .pixel-box { border: 2px solid #fff; padding: 20px; margin-bottom: 20px; width: 100%; max-width: 500px; background: #111; border-radius: 12px; box-sizing: border-box; }
         .timer-val { font-size: 3rem; color: #39ff14; text-align: center; margin: 10px 0; font-weight: bold; }
         .xp-bg { width: 100%; height: 12px; background: #333; border-radius: 6px; margin-bottom: 10px; overflow: hidden; }
         #xpBar { height: 100%; background: #00f2ff; width: 0%; transition: 0.5s; }
-        input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 8px; box-sizing: border-box;}
+        input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 8px; box-sizing: border-box; font-size: 16px;}
         button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: #000; border: none; font-weight: bold; font-size: 1.1rem; border-radius: 8px; }
         .log-item { border: 1px solid #333; padding: 15px; margin-top: 10px; background: #1a1a1a; border-radius: 8px; }
         .log-img { width: 100%; max-height: 300px; object-fit: cover; border-radius: 6px; margin: 10px 0; }
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); color:#39ff14; display:flex; justify-content:center; align-items:center; font-size:1.5rem; z-index:999; display:none; }
+        .status-dot { height: 10px; width: 10px; background-color: #555; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-active { background-color: #39ff14; box-shadow: 0 0 5px #39ff14; }
     </style>
 </head>
 <body>
-
-    <div id="loading">連線同步中...</div>
 
     <div class="pixel-box">
         <div style="display:flex; justify-content:space-between;">
@@ -32,13 +30,14 @@
         </div>
         <div class="xp-bg"><div id="xpBar"></div></div>
         <div class="timer-val" id="timerDisp">---</div>
-        <div style="text-align:center; font-size:0.8rem; color:#aaa;">🟢 雲端同步已啟動</div>
+        <div style="text-align:center; font-size:0.8rem; color:#aaa;">
+            <span id="cloudStatus" class="status-dot"></span><span id="cloudText">單機模式 (未設定雲端)</span>
+        </div>
     </div>
 
-    <div class="pixel-box" id="formBox">
-        <h2 id="formTitle" style="margin-top:0;">➤ 寫入紀錄</h2>
+    <div class="pixel-box">
+        <h2 style="margin-top:0; border-bottom:1px solid #333; padding-bottom:10px;">➤ 寫入紀錄</h2>
         <form id="mainForm">
-            <input type="hidden" id="rowIndex" value="">
             <input type="date" id="f_date" required>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <select id="f_knee">
@@ -49,15 +48,12 @@
                 <input type="number" id="f_sleep" placeholder="睡眠 (0-100)">
             </div>
             <input type="number" id="f_weight" step="0.1" placeholder="體重 (kg)">
-            
-            <div style="margin-top:15px; border:1px dashed #444; padding:10px; border-radius:8px;">
+            <div style="margin-top:10px; border:1px dashed #444; padding:10px; border-radius:8px;">
                 <label style="color:#aaa; font-size:0.9rem;">📸 圖片 (自動壓縮)</label>
                 <input type="file" id="f_img_file" accept="image/*" style="margin-top:5px;">
             </div>
-            
             <textarea id="f_note" placeholder="心得..." rows="3"></textarea>
-            <button type="submit" id="subBtn">傳送到雲端</button>
-            <button type="button" id="canBtn" style="display:none; background:#333; color:#fff;" onclick="cancelEdit()">取消</button>
+            <button type="submit" id="subBtn">確認紀錄</button>
         </form>
     </div>
 
@@ -66,53 +62,50 @@
     </div>
 
     <div class="pixel-box">
-        <h2 style="margin-top:0;">➤ 歷史紀錄</h2>
+        <h2 style="margin-top:0;">➤ 歷史紀錄 (本機)</h2>
         <div id="logContainer"></div>
     </div>
 
     <script>
-        // ★★★ 請把這裡換成你的 Apps Script 網址 ★★★
-        var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-        
-        var chart = null;
-        var globalData = [];
+        // ==========================================
+        // ▼▼▼ 設定區域 (請將網址貼在引號中間) ▼▼▼
+        var GAS_URL = "https://script.google.com/u/0/home/projects/1pMq3JW7AkJrPYaGp0XKLgjBqYQNevgVZIJbAHM9_EtMX6uaXNT-rixg0/edit"; 
+        // 例如： var GAS_URL = "https://script.google.com/...";
+        // ==========================================
 
-        function doCountdown() {
+        var LOCAL_KEY = "TBA360_V12_SAFE";
+
+        // 1. 倒數計時 (獨立執行，保證不壞)
+        try {
             var target = new Date(2026, 10, 13).getTime();
             var diff = target - new Date().getTime();
             var days = Math.floor(diff / (1000 * 60 * 60 * 24));
             document.getElementById('timerDisp').innerHTML = (days > 0 ? days : 0) + "<span style='font-size:1rem; color:#fff'> DAYS</span>";
-        }
+        } catch(e) { document.getElementById('timerDisp').innerHTML = "Err"; }
 
         window.onload = function() {
-            doCountdown();
-            document.getElementById('f_date').value = new Date().toISOString().substr(0, 10);
-            fetchData(); // 啟動時從雲端讀取
-            document.getElementById('mainForm').onsubmit = function(e) { e.preventDefault(); handleSave(); };
+            var today = new Date();
+            document.getElementById('f_date').value = today.toISOString().substr(0, 10);
+            
+            // 檢查雲端設定
+            if (GAS_URL && GAS_URL.startsWith("http")) {
+                document.getElementById('cloudStatus').classList.add('status-active');
+                document.getElementById('cloudText').innerText = "雲端連線就緒 (雙重存檔)";
+            }
+
+            render();
+
+            document.getElementById('mainForm').onsubmit = function(e) {
+                e.preventDefault();
+                processForm();
+            };
         };
 
-        // 從 Google Sheet 讀取資料
-        function fetchData() {
-            document.getElementById('loading').style.display = 'flex';
-            fetch(GAS_URL + "?action=read")
-            .then(res => res.json())
-            .then(data => {
-                // Sheet 的資料是正序 (舊->新)，我們反轉它讓最新的在最上面
-                globalData = data.reverse(); 
-                render(globalData);
-                document.getElementById('loading').style.display = 'none';
-            })
-            .catch(err => {
-                console.error(err);
-                alert("連線失敗，請檢查網路");
-                document.getElementById('loading').style.display = 'none';
-            });
-        }
+        function processForm() {
+            document.getElementById('subBtn').innerText = "處理中...";
+            document.getElementById('subBtn').disabled = true;
 
-        function handleSave() {
-            document.getElementById('loading').style.display = 'flex';
             var file = document.getElementById('f_img_file').files[0];
-
             if (file) {
                 var reader = new FileReader();
                 reader.onload = function(e) {
@@ -120,74 +113,76 @@
                     img.onload = function() {
                         var canvas = document.createElement('canvas');
                         var ctx = canvas.getContext('2d');
-                        var maxDim = 400; // 雲端版限制 400px 以免超過單格限制
+                        var maxDim = 450;
                         var w = img.width; var h = img.height;
-                        if (w > h) { if (w > maxDim) { h *= maxDim/w; w = maxDim; } }
+                        if (w > h) { if (w > maxDim) { h *= maxDim/w; w = maxDim; } } 
                         else { if (h > maxDim) { w *= maxDim/h; h = maxDim; } }
                         canvas.width = w; canvas.height = h;
                         ctx.drawImage(img, 0, 0, w, h);
-                        sendToSheet(canvas.toDataURL('image/jpeg', 0.6));
+                        saveData(canvas.toDataURL('image/jpeg', 0.6));
                     };
                     img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
             } else {
-                // 如果是編輯模式且沒傳新圖，要找回舊圖
-                var currentImg = "";
-                var idx = document.getElementById('rowIndex').value; 
-                // 注意：這裡簡化處理，編輯時若沒選圖，暫時不保留舊圖(因為 Apps Script 邏輯較複雜)，建議編輯時若要留圖需重新上傳，或只改文字。
-                // 為了用戶體驗，我們假設編輯是「覆蓋」
-                sendToSheet("");
+                saveData("");
             }
         }
 
-        function sendToSheet(imgData) {
-            var formData = new FormData();
-            formData.append('date', document.getElementById('f_date').value);
-            formData.append('knee', document.getElementById('f_knee').value);
-            formData.append('sleep', document.getElementById('f_sleep').value);
-            formData.append('weight', document.getElementById('f_weight').value);
-            formData.append('note', document.getElementById('f_note').value);
-            formData.append('img', imgData);
-            
-            // 如果有 rowIndex 代表是編輯
-            var rowIndex = document.getElementById('rowIndex').value;
-            if (rowIndex) formData.append('rowIndex', rowIndex);
+        function saveData(imgData) {
+            var entry = {
+                date: document.getElementById('f_date').value,
+                knee: document.getElementById('f_knee').value,
+                sleep: document.getElementById('f_sleep').value,
+                weight: document.getElementById('f_weight').value,
+                note: document.getElementById('f_note').value,
+                img: imgData
+            };
 
-            fetch(GAS_URL, {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.result === "success") {
-                    alert("雲端同步成功！");
-                    cancelEdit();
-                    fetchData(); // 重新讀取
-                } else {
-                    alert("寫入失敗");
-                    document.getElementById('loading').style.display = 'none';
-                }
-            })
-            .catch(err => {
-                alert("錯誤：" + err);
-                document.getElementById('loading').style.display = 'none';
-            });
+            // 1. 先存本機 (保證成功)
+            var raw = localStorage.getItem(LOCAL_KEY);
+            var items = raw ? JSON.parse(raw) : [];
+            items.unshift(entry);
+            localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
+            render();
+
+            // 2. 嘗試傳雲端 (如果有設定)
+            if (GAS_URL && GAS_URL.startsWith("http")) {
+                fetch(GAS_URL, {
+                    method: "POST",
+                    body: JSON.stringify(entry)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert("✅ 本機儲存成功 + ☁️ 雲端同步成功！");
+                    resetForm();
+                })
+                .catch(err => {
+                    alert("✅ 本機儲存成功，但 ⚠️ 雲端連線失敗 (請檢查網址)");
+                    resetForm();
+                });
+            } else {
+                alert("✅ 本機儲存成功 (未設定雲端)");
+                resetForm();
+            }
         }
 
-        function render(items) {
+        function resetForm() {
+            document.getElementById('mainForm').reset();
+            document.getElementById('f_date').value = new Date().toISOString().substr(0, 10);
+            document.getElementById('subBtn').innerText = "確認紀錄";
+            document.getElementById('subBtn').disabled = false;
+        }
+
+        function render() {
+            var raw = localStorage.getItem(LOCAL_KEY);
+            var items = raw ? JSON.parse(raw) : [];
             var lv = Math.floor(items.length / 5) + 1;
             document.getElementById('lvDisplay').innerHTML = "Lv." + lv + " 騎士";
             document.getElementById('xpBar').style.width = (items.length % 5) * 20 + "%";
 
             var container = document.getElementById('logContainer');
-            container.innerHTML = items.length ? "" : "<p style='text-align:center; color:#555;'>雲端無資料</p>";
-            
-            // 計算原本在 Sheet 中的 Row Index (假設 headers 佔 1 列)
-            // 因為 items 是反轉過的 (最新在 sheet 最下面)，所以 items[0] 對應 sheet 的 lastRow
-            // 為了簡單，我們編輯功能先只做「顯示」，不做複雜的 Row 計算，避免出錯。
-            // 這裡簡化：暫時不支援編輯舊資料，只支援新增。
-            // 若要支援編輯，需在讀取時將 rowIndex 一併回傳。
+            container.innerHTML = items.length ? "" : "<p style='text-align:center; color:#555;'>暫無紀錄</p>";
             
             items.forEach(function(it) {
                 var div = document.createElement('div');
@@ -200,22 +195,12 @@
             });
             drawChart(items);
         }
-        
-        function cancelEdit() {
-            document.getElementById('mainForm').reset();
-            document.getElementById('rowIndex').value = "";
-            document.getElementById('f_date').value = new Date().toISOString().substr(0, 10);
-            document.getElementById('subBtn').innerText = "傳送到雲端";
-            document.getElementById('canBtn').style.display = "none";
-        }
 
         function drawChart(items) {
             if (typeof Chart === "undefined") return;
             var ctx = document.getElementById('chartCanvas').getContext('2d');
-            if (chart) chart.destroy();
-            // 圖表需要時間由舊到新
             var d = items.slice().reverse().slice(-7);
-            chart = new Chart(ctx, {
+            new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: d.map(function(x){ return x.date.substr(5); }),
@@ -224,14 +209,9 @@
                         { label: '體重', data: d.map(function(x){ return x.weight; }), borderColor: '#00f2ff', borderWidth: 2 }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    scales: { y: { grid: { color: '#333' } }, x: { grid: { display: false } } },
-                    plugins: { legend: { labels: { color: '#fff' } } }
-                }
+                options: { responsive: true, scales: { y: { grid: { color: '#333' } }, x: { grid: { display: false } } }, plugins: { legend: { labels: { color: '#fff' } } } }
             });
         }
     </script>
 </body>
 </html>
-
