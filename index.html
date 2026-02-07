@@ -1,116 +1,230 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval';">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#000000">
-    <title>TBA360 v19 Fixed</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <style>
-        body { background: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 0; margin: 0; padding-bottom: 40px; }
-        
-        .banner-container { width: 100%; height: 200px; overflow: hidden; position: relative; border-bottom: 4px solid #00f2ff; margin-bottom: 20px; background: #111; }
-        .banner-img { width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0.9; }
-        .banner-title { position: absolute; bottom: 10px; left: 20px; font-size: 2rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px #00f2ff; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 5px; border: 1px solid #00f2ff; }
-
-        .pixel-box { border: 2px solid #fff; padding: 20px; margin-bottom: 20px; width: 90%; max-width: 500px; background: #111; border-radius: 12px; box-sizing: border-box; }
-        
-        .cp-display { text-align: center; margin-bottom: 15px; }
-        .cp-label { font-size: 0.9rem; color: #aaa; letter-spacing: 2px; }
-        .cp-value { font-size: 3.5rem; color: #ff3131; font-weight: 900; text-shadow: 0 0 15px #ff0000; font-family: monospace; }
-        
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .stat-card { background: #222; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #444; }
-        .stat-val { font-size: 1.2rem; color: #39ff14; font-weight: bold; }
-        .stat-label { font-size: 0.7rem; color: #888; }
-
-        .timer-val { font-size: 1.5rem; color: #39ff14; text-align: center; margin-top: 5px; }
-        .xp-bg { width: 100%; height: 8px; background: #333; border-radius: 4px; margin: 10px 0; overflow: hidden; }
-        #xpBar { height: 100%; background: #00f2ff; width: 0%; transition: 0.5s; }
-        
-        input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 8px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
-        button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: #000; border: none; font-weight: bold; font-size: 1.1rem; border-radius: 8px; }
-        
-        .log-item { border: 1px solid #333; padding: 15px; margin-top: 10px; background: #1a1a1a; border-radius: 8px; position: relative; }
-        .log-img { width: 100%; max-height: 300px; object-fit: cover; border-radius: 6px; margin: 10px 0; }
-        .tag-type { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; background: #004444; color: #00f2ff; padding: 2px 8px; border-radius: 10px; border: 1px solid #00f2ff; }
-        
-        #loading-indicator { text-align: center; color: #00f2ff; font-size: 0.9rem; margin: 10px 0; display: none; }
-    </style>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'self' data: blob: 'unsafe-inline' 'unsafe-eval';">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>TBA360 v20 Final</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<style>
+    body { background: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 0; margin: 0; padding-bottom: 40px; }
+    .banner-container { width: 100%; height: 200px; overflow: hidden; position: relative; border-bottom: 4px solid #00f2ff; margin-bottom: 20px; background: #111; }
+    .banner-img { width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0.9; }
+    .banner-title { position: absolute; bottom: 10px; left: 20px; font-size: 2rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px #00f2ff; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 5px; border: 1px solid #00f2ff; }
+    .pixel-box { border: 2px solid #fff; padding: 20px; margin-bottom: 20px; width: 90%; max-width: 500px; background: #111; border-radius: 12px; box-sizing: border-box; }
+    .cp-display { text-align: center; margin-bottom: 15px; }
+    .cp-label { font-size: 0.9rem; color: #aaa; letter-spacing: 2px; }
+    .cp-value { font-size: 3.5rem; color: #ff3131; font-weight: 900; text-shadow: 0 0 15px #ff0000; font-family: monospace; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .stat-card { background: #222; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #444; }
+    .stat-val { font-size: 1.2rem; color: #39ff14; font-weight: bold; }
+    .stat-label { font-size: 0.7rem; color: #888; }
+    .timer-val { font-size: 1.5rem; color: #39ff14; text-align: center; margin-top: 5px; }
+    .xp-bg { width: 100%; height: 8px; background: #333; border-radius: 4px; margin: 10px 0; overflow: hidden; }
+    #xpBar { height: 100%; background: #00f2ff; width: 0%; transition: 0.5s; }
+    input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 8px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
+    button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: #000; border: none; font-weight: bold; font-size: 1.1rem; border-radius: 8px; }
+    .log-item { border: 1px solid #333; padding: 15px; margin-top: 10px; background: #1a1a1a; border-radius: 8px; position: relative; }
+    .log-img { width: 100%; max-height: 300px; object-fit: cover; border-radius: 6px; margin: 10px 0; }
+    .tag-type { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; background: #004444; color: #00f2ff; padding: 2px 8px; border-radius: 10px; border: 1px solid #00f2ff; }
+    #loading-indicator { text-align: center; color: #00f2ff; font-size: 0.9rem; margin: 10px 0; display: none; }
+</style>
 </head>
 <body>
 
-    <div class="banner-container">
-        <img src="" class="banner-img" id="bannerImg" onerror="this.src='https://via.placeholder.com/800x450/000033/00f2ff?text=Loading...'">
-        <div class="banner-title">TBA360 戰情室</div>
+<div class="banner-container">
+    <img src="" class="banner-img" id="bannerImg" onerror="this.src='https://via.placeholder.com/800x450/000033/00f2ff?text=Loading...'">
+    <div class="banner-title">TBA360 戰情室</div>
+</div>
+
+<div class="pixel-box">
+    <div class="cp-display">
+        <div class="cp-label">CURRENT CP / 戰鬥力</div>
+        <div class="cp-value" id="cpVal">0</div>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-val" id="totalDist">0 km</div>
+            <div class="stat-label">累積里程</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" id="totalTime">0 h</div>
+            <div class="stat-label">累積時數</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" id="totalCal">0</div>
+            <div class="stat-label">燃燒熱量 (cal)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" id="totalCount">0</div>
+            <div class="stat-label">出勤次數</div>
+        </div>
     </div>
 
-    <div class="pixel-box">
-        <div class="cp-display">
-            <div class="cp-label">CURRENT CP / 戰鬥力</div>
-            <div class="cp-value" id="cpVal">0</div>
+    <div style="display:flex; justify-content:space-between; margin-top:15px;">
+        <span id="lvDisplay" style="color:#00f2ff; font-weight:bold;">Lv.1 騎士</span>
+        <div class="timer-val" id="timerDisp">---</div>
+    </div>
+    <div class="xp-bg"><div id="xpBar"></div></div>
+</div>
+
+<div class="pixel-box">
+    <h2 style="margin-top:0; border-bottom:1px solid #333; padding-bottom:10px;">➤ 寫入紀錄</h2>
+    <form id="mainForm">
+        <input type="date" id="f_date" required>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <select id="f_type">
+                <option value="🚴 騎行">🚴 騎行</option>
+                <option value="🚶 快走">🚶 快走</option>
+                <option value="🏃 跑步">🏃 跑步</option>
+                <option value="🏀 打球">🏀 打球</option>
+                <option value="🏋️ 重訓">🏋️ 重訓</option>
+                <option value="🧘 伸展">🧘 伸展</option>
+                <option value="🛌 休息">🛌 休息</option>
+            </select>
+            <select id="f_knee">
+                <option value="🟢舒服">🟢 膝蓋舒服</option>
+                <option value="🟡微酸">🟡 膝蓋微酸</option>
+                <option value="🔴疼痛">🔴 膝蓋疼痛</option>
+            </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px;">
+            <input type="number" id="f_dist" placeholder="距離(km)" step="0.1">
+            <input type="number" id="f_time" placeholder="時間(hr)" step="0.1">
+            <input type="number" id="f_cal" placeholder="卡路里" step="1">
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <input type="number" id="f_sleep" placeholder="睡眠 (0-100)">
+            <input type="number" id="f_weight" step="0.1" placeholder="體重 (kg)">
         </div>
         
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-val" id="totalDist">0 km</div>
-                <div class="stat-label">累積里程</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-val" id="totalTime">0 h</div>
-                <div class="stat-label">累積時數</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-val" id="totalCal">0</div>
-                <div class="stat-label">燃燒熱量 (cal)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-val" id="totalCount">0</div>
-                <div class="stat-label">出勤次數</div>
-            </div>
+        <div style="margin-top:10px; border:1px dashed #444; padding:10px; border-radius:8px;">
+            <label for="f_img_file" style="color:#aaa; font-size:0.9rem;">📸 圖片 (自動壓縮)</label>
+            <input type="file" id="f_img_file" accept="image/*" style="margin-top:5px;">
         </div>
+        
+        <textarea id="f_note" placeholder="心得..." rows="2"></textarea>
+        <button type="submit" id="subBtn">確認紀錄</button>
+    </form>
+</div>
 
-        <div style="display:flex; justify-content:space-between; margin-top:15px;">
-            <span id="lvDisplay" style="color:#00f2ff; font-weight:bold;">Lv.1 騎士</span>
-            <div class="timer-val" id="timerDisp">---</div>
-        </div>
-        <div class="xp-bg"><div id="xpBar"></div></div>
-    </div>
+<div class="pixel-box">
+    <canvas id="chartCanvas" height="200"></canvas>
+</div>
 
-    <div class="pixel-box">
-        <h2 style="margin-top:0; border-bottom:1px solid #333; padding-bottom:10px;">➤ 寫入紀錄</h2>
-        <form id="mainForm">
-            <input type="date" id="f_date" required>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <select id="f_type">
-                    <option value="🚴 騎行">🚴 騎行</option>
-                    <option value="🚶 快走">🚶 快走</option>
-                    <option value="🏃 跑步">🏃 跑步</option>
-                    <option value="🏀 打球">🏀 打球</option>
-                    <option value="🏋️ 重訓">🏋️ 重訓</option>
-                    <option value="🧘 伸展">🧘 伸展</option>
-                    <option value="🛌 休息">🛌 休息</option>
-                </select>
-                <select id="f_knee">
-                    <option value="🟢舒服">🟢 膝蓋舒服</option>
-                    <option value="🟡微酸">🟡 膝蓋微酸</option>
-                    <option value="🔴疼痛">🔴 膝蓋疼痛</option>
-                </select>
-            </div>
+<div class="pixel-box">
+    <h2 style="margin-top:0;">➤ 歷史紀錄</h2>
+    <div id="loading-indicator">☁️ 同步中...</div>
+    <div id="logContainer"></div>
+</div>
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px;">
-                <input type="number" id="f_dist" placeholder="距離(km)" step="0.1">
-                <input type="number" id="f_time" placeholder="時間(hr)" step="0.1">
-                <input type="number" id="f_cal" placeholder="卡路里" step="1">
-            </div>
+<script>
+    // ==========================================
+    // 網址已幫您填好，請確認前後是英文的雙引號
+    var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec"; 
+    
+    var BANNER_URL = "https://i.meee.com.tw/0neg3F9.png"; 
+    // ==========================================
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <input type="number" id="f_sleep" placeholder="睡眠 (0-100)">
-                <input type="number" id="f_weight" step="0.1" placeholder="體重 (kg)">
-            </div>
-            
-            <div style="margin-top:10px; border:1px dashed #444; padding:10px; border-radius:8px;">
-                <label for="f_img_file" style="color:#aaa; font-size:0.
+    var LOCAL_KEY = "TBA360_V20_CLEAN";
+
+    window.onload = function() {
+        if(BANNER_URL) {
+            var banner = document.getElementById('bannerImg');
+            if(banner) banner.src = BANNER_URL;
+        }
+        initApp();
+    };
+
+    function initApp() {
+        var today = new Date();
+        document.getElementById('f_date').value = today.toISOString().substr(0, 10);
+        
+        try {
+            var target = new Date(2026, 10, 13).getTime();
+            var diff = target - new Date().getTime();
+            var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            document.getElementById('timerDisp').innerHTML = (days > 0 ? days : 0) + "<span style='font-size:0.8rem; color:#fff'> DAYS LEFT</span>";
+        } catch(e) {}
+
+        renderLocal();
+
+        if (GAS_URL && GAS_URL.startsWith("http")) {
+            fetchCloudData();
+        }
+
+        document.getElementById('subBtn').onclick = function(e) {
+            e.preventDefault();
+            processForm();
+        };
+    }
+
+    function fetchCloudData() {
+        document.getElementById('loading-indicator').style.display = 'block';
+        fetch(GAS_URL)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading-indicator').style.display = 'none';
+            if (data && data.length > 0) renderCloud(data);
+        })
+        .catch(err => {
+            document.getElementById('loading-indicator').style.display = 'none';
+        });
+    }
+
+    function renderCloud(items) {
+        updateStatsAndCP(items);
+        renderList(items, "CLOUD");
+    }
+
+    function renderLocal() {
+        var raw = localStorage.getItem(LOCAL_KEY);
+        var items = raw ? JSON.parse(raw) : [];
+        updateStatsAndCP(items);
+        renderList(items, "LOCAL");
+    }
+
+    function updateStatsAndCP(items) {
+        var totalDist = 0;
+        var totalTime = 0;
+        var totalCal = 0;
+        var count = 0;
+        var currentWeight = 80; 
+        var currentSleep = 60;
+        
+        if (items.length > 0) {
+            if (items[0].weight) currentWeight = parseFloat(items[0].weight);
+            if (items[0].sleep) currentSleep = parseFloat(items[0].sleep);
+        }
+
+        items.forEach(function(it) {
+            if (it.type !== "🛌 休息") {
+                count++;
+                totalDist += parseFloat(it.dist || 0);
+                totalTime += parseFloat(it.time || 0);
+                totalCal += parseFloat(it.cal || 0);
+            }
+        });
+
+        document.getElementById('totalDist').innerText = totalDist.toFixed(1) + " km";
+        document.getElementById('totalTime').innerText = totalTime.toFixed(1) + " h";
+        document.getElementById('totalCal').innerText = totalCal;
+        document.getElementById('totalCount').innerText = count;
+
+        var lv = Math.floor(count / 5) + 1;
+        document.getElementById('lvDisplay').innerHTML = "Lv." + lv + " 騎士";
+        document.getElementById('xpBar').style.width = (count % 5) * 20 + "%";
+
+        var base = totalDist + totalTime + totalCal;
+        var weightBonus = (80 - currentWeight) * 10;
+        var sleepBonus = currentSleep / 60;
+        var multiplier = 1 + (count + weightBonus + sleepBonus + count) / 100;
+        var cp = Math.floor(base * multiplier);
+        
+        document.getElementById('cpVal').innerText = cp
