@@ -131,14 +131,14 @@
         <div id="logContainer"></div>
     </div>
 
-    <script>
+<script>
         // ==========================================
-        // 1. 請填入你的 GAS 網址 (記得加引號)
-        var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec"; 
+        // ▼▼▼ 設定區域 (已淨化格式) ▼▼▼
         
-        // 2. 請填入 Banner 圖片的「直接連結」(結尾通常是 .jpg 或 .png)
-        // 提示：對你的圖床圖片按右鍵 -> 複製圖片位址
-        var BANNER_URL = "https://i.meee.com.tw/0neg3F9.png"; // 請換成真正的圖片位址
+        var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
+        
+        var BANNER_URL = "https://i.meee.com.tw/0neg3F9.png";
+        
         // ==========================================
 
         var LOCAL_KEY = "TBA360_V18_FINAL";
@@ -146,7 +146,8 @@
         window.onload = function() {
             // 設定 Banner
             if(BANNER_URL) {
-                document.getElementById('bannerImg').src = BANNER_URL;
+                var banner = document.getElementById('bannerImg');
+                if(banner) banner.src = BANNER_URL;
             }
             initApp();
         };
@@ -156,6 +157,7 @@
             document.getElementById('f_date').value = today.toISOString().substr(0, 10);
             
             try {
+                // 目標日：2026/11/13
                 var target = new Date(2026, 10, 13).getTime();
                 var diff = target - new Date().getTime();
                 var days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -367,4 +369,5 @@
     </script>
 </body>
 </html>
+
 
