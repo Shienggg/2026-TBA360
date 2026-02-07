@@ -271,3 +271,33 @@ function render(list) {
             <div class="item-head">
                 <b style="color:#00f2ff">${item.date}</b>
                 <span class="tag">${item.type}</span>
+            </div>
+            <div style="margin:5px 0;color:#aaa;font-size:0.9rem">${item.knee} | 💤${item.sleep} | ⚖️${item.weight}kg</div>
+            <div style="color:#39ff14;font-size:0.9rem;font-weight:bold">
+                ${item.dist?item.dist+'km ':''} ${item.time?item.time+'h ':''} ${item.cal?'🔥'+item.cal:''}
+            </div>
+            <div style="color:#fff;margin-top:5px;font-size:0.95rem">${item.note||''}</div>
+            ${item.img ? '<img src="'+item.img+'">' : ''}
+        `;
+        elList.appendChild(div);
+    });
+
+    // 更新面板數據
+    document.getElementById('tDist').innerText = cDist.toFixed(1);
+    document.getElementById('tTime').innerText = cTime.toFixed(1);
+    document.getElementById('tCal').innerText = cCal;
+    document.getElementById('tCount').innerText = cCount;
+    
+    // 更新等級條
+    var lv = Math.floor(cCount/5)+1;
+    document.getElementById('lvDisp').innerText = "Lv." + lv + " 騎士";
+    document.getElementById('xpBar').style.width = (cCount%5)*20 + "%";
+
+    // 戰鬥力公式
+    var base = cDist + cTime + cCal;
+    var multi = 1 + (cCount + (80-lastW)*10 + (lastS/60) + cCount)/100;
+    document.getElementById('cpVal').innerText = Math.floor(base * multi).toLocaleString();
+}
+</script>
+</body>
+</html>
