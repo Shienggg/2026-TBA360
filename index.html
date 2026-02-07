@@ -3,58 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TBA360 v25 Final Art</title>
+<title>TBA360 v26 Status</title>
 <style>
 /* 基礎設定 */
 body { background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
 
-/* 1. Banner 圖片區 (高度增加 + 完整顯示) */
+/* Banner */
 .banner { 
-    width: 100%; 
-    height: 300px; /* 高度增加，讓圖更清楚 */
-    background-color: #000; /* 背景色 */
+    width: 100%; height: 300px; 
+    background-color: #000; 
     background-image: url('https://i.meee.com.tw/0neg3F9.png'); 
-    background-size: contain; /* 改為 contain，確保整張圖都看得到 */
-    background-repeat: no-repeat;
-    background-position: center; 
-    border-bottom: 4px solid #00f2ff; 
-    margin-bottom: 20px; 
-    position: relative;
+    background-size: contain; background-repeat: no-repeat; background-position: center; 
+    border-bottom: 4px solid #00f2ff; margin-bottom: 20px; position: relative;
 }
-
-/* Banner 文字微調，移到右下角避免擋住主圖 */
 .banner-text {
     position: absolute; bottom: 10px; right: 10px;
-    font-size: 1.5rem; font-weight: bold; font-style: italic;
-    color: #fff; text-shadow: 0 0 10px #00f2ff;
-    background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 5px;
-    border: 1px solid #00f2ff;
+    font-size: 1.5rem; font-weight: bold; font-style: italic; color: #fff; text-shadow: 0 0 10px #00f2ff;
+    background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 5px; border: 1px solid #00f2ff;
 }
 
-/* 2. 容器樣式 */
+/* 容器 */
 .box { border: 1px solid #333; padding: 20px; margin-bottom: 20px; width: 90%; max-width: 500px; background: #111; border-radius: 12px; box-sizing: border-box; }
 
-/* 3. 戰鬥力面板 */
+/* 戰鬥力 */
 .cp-title { text-align: center; color: #888; letter-spacing: 2px; font-size: 0.9rem; }
 .cp-val { font-size: 3.5rem; color: #ff3131; font-weight: 900; text-align: center; font-family: monospace; text-shadow: 0 0 15px #f00; margin: 5px 0; }
 
+/* 數據網格 */
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; text-align: center; }
 .card { background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
 .val { font-size: 1.2rem; color: #39ff14; font-weight: bold; }
 .lbl { font-size: 0.8rem; color: #888; margin-top: 2px; }
 
-/* 4. 等級條 */
+/* 新增：體能狀況區 */
+.status-row { margin-top: 20px; padding-top: 15px; border-top: 1px dashed #333; display: flex; justify-content: space-around; }
+.status-item { text-align: center; }
+.status-val { font-size: 1.5rem; font-weight: bold; color: #fff; }
+.status-lbl { font-size: 0.8rem; color: #aaa; margin-top: 2px; }
+
+/* 等級條 */
 .lv-row { display: flex; justify-content: space-between; margin-top: 15px; color: #00f2ff; font-weight: bold; }
 .days { color: #39ff14; }
 .xp-bg { width: 100%; height: 8px; background: #333; margin-top: 5px; border-radius: 4px; overflow: hidden; }
 .xp-fill { height: 100%; background: #00f2ff; width: 0%; transition: width 0.5s; }
 
-/* 5. 輸入表單 */
+/* 表單 */
 input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 6px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
 button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: #000; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
 button:disabled { background: #555; color: #888; }
 
-/* 6. 列表樣式 */
+/* 列表 */
 .item { border: 1px solid #333; padding: 15px; margin-top: 10px; background: #1a1a1a; border-radius: 8px; }
 .item-head { display: flex; justify-content: space-between; margin-bottom: 5px; }
 .tag { background: #004444; color: #00f2ff; padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; }
@@ -78,6 +76,17 @@ button:disabled { background: #555; color: #888; }
         <div class="card"><div class="val" id="tTime">0</div><div class="lbl">時數 (h)</div></div>
         <div class="card"><div class="val" id="tCal">0</div><div class="lbl">卡路里</div></div>
         <div class="card"><div class="val" id="tCount">0</div><div class="lbl">次數</div></div>
+    </div>
+
+    <div class="status-row">
+        <div class="status-item">
+            <div class="status-val" id="avgSleep">--</div>
+            <div class="status-lbl">近3日均眠</div>
+        </div>
+        <div class="status-item">
+            <div class="status-val" id="avgWeight">--</div>
+            <div class="status-lbl">近3日均重</div>
+        </div>
     </div>
 
     <div class="lv-row">
@@ -123,23 +132,19 @@ button:disabled { background: #555; color: #888; }
 <script>
 // ▼ 設定區 ▼
 var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-var KEY = "TBA360_V24";
+var KEY = "TBA360_V26";
 // ▲ 設定區 ▲
 
 window.onload = function() {
-    // 1. 初始化日期
     document.getElementById('i_date').value = new Date().toISOString().slice(0,10);
     
-    // 2. 倒數計時
     var diff = new Date(2026,10,13) - new Date();
     var d = Math.floor(diff/86400000);
     document.getElementById('daysDisp').innerText = (d>0?d:0) + " DAYS LEFT";
 
-    // 3. 載入資料
-    loadLocal(); // 先載入本機 (秒開)
-    if(GAS_URL) loadCloud(); // 再載入雲端
+    loadLocal();
+    if(GAS_URL) loadCloud();
 
-    // 4. 按鈕事件
     document.getElementById('btnSave').onclick = saveData;
 };
 
@@ -209,13 +214,11 @@ function commitSave(img64) {
         img: img64
     };
 
-    // 1. 存本機
     var list = JSON.parse(localStorage.getItem(KEY) || "[]");
     list.unshift(obj);
     localStorage.setItem(KEY, JSON.stringify(list));
     render(list);
 
-    // 2. 存雲端
     if(GAS_URL) {
         fetch(GAS_URL, {
             method: 'POST',
@@ -229,7 +232,7 @@ function commitSave(img64) {
             loadCloud();
         })
         .catch(e => {
-            alert("⚠️ 已存入本機 (雲端連線失敗)");
+            alert("⚠️ 已存入本機");
             resetUI();
         });
     } else {
@@ -252,6 +255,7 @@ function render(list) {
     var elList = document.getElementById('list');
     elList.innerHTML = "";
 
+    // 1. 數據統計
     if(list.length > 0) {
         lastW = parseFloat(list[0].weight) || 80;
         lastS = parseFloat(list[0].sleep) || 60;
@@ -264,7 +268,8 @@ function render(list) {
             cTime += parseFloat(item.time||0);
             cCal += parseFloat(item.cal||0);
         }
-
+        
+        // 生成列表
         var div = document.createElement('div');
         div.className = "item";
         div.innerHTML = `
@@ -282,21 +287,49 @@ function render(list) {
         elList.appendChild(div);
     });
 
-    // 更新面板數據
+    // 2. 更新上方數據
     document.getElementById('tDist').innerText = cDist.toFixed(1);
     document.getElementById('tTime').innerText = cTime.toFixed(1);
     document.getElementById('tCal').innerText = cCal;
     document.getElementById('tCount').innerText = cCount;
     
-    // 更新等級條
+    // 等級條
     var lv = Math.floor(cCount/5)+1;
     document.getElementById('lvDisp').innerText = "Lv." + lv + " 騎士";
     document.getElementById('xpBar').style.width = (cCount%5)*20 + "%";
 
-    // 戰鬥力公式
+    // 戰鬥力
     var base = cDist + cTime + cCal;
     var multi = 1 + (cCount + (80-lastW)*10 + (lastS/60) + cCount)/100;
     document.getElementById('cpVal').innerText = Math.floor(base * multi).toLocaleString();
+
+    // 3. 計算近3日平均 (體能狀況)
+    // 篩選有填寫睡眠/體重的資料
+    var sleepList = list.filter(function(x){ return x.sleep && parseFloat(x.sleep)>0; });
+    var weightList = list.filter(function(x){ return x.weight && parseFloat(x.weight)>0; });
+
+    // 計算睡眠 (Sleep)
+    if(sleepList.length > 0) {
+        var sCount = Math.min(sleepList.length, 3);
+        var sSum = 0;
+        for(var i=0; i<sCount; i++) sSum += parseFloat(sleepList[i].sleep);
+        var sAvg = (sSum / sCount).toFixed(1);
+        var sColor = sAvg >= 70 ? "#39ff14" : (sAvg >= 60 ? "#ffff00" : "#ff3131");
+        document.getElementById('avgSleep').innerHTML = `<span style="color:${sColor}">${sAvg}</span>`;
+    } else {
+        document.getElementById('avgSleep').innerText = "--";
+    }
+
+    // 計算體重 (Weight)
+    if(weightList.length > 0) {
+        var wCount = Math.min(weightList.length, 3);
+        var wSum = 0;
+        for(var j=0; j<wCount; j++) wSum += parseFloat(weightList[j].weight);
+        var wAvg = (wSum / wCount).toFixed(1);
+        document.getElementById('avgWeight').innerHTML = wAvg + " kg";
+    } else {
+        document.getElementById('avgWeight').innerText = "--";
+    }
 }
 </script>
 </body>
