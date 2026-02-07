@@ -6,24 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
-    <title>TBA360 戰鬥力版</title>
+    <title>TBA360 v18</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 0; margin: 0; padding-bottom: 40px; }
         
-        /* 1. Banner 樣式 */
-        .banner-container { width: 100%; height: 180px; overflow: hidden; position: relative; border-bottom: 4px solid #00f2ff; margin-bottom: 20px; }
-        .banner-img { width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0.8; }
-        .banner-title { position: absolute; bottom: 10px; left: 20px; font-size: 2rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px #00f2ff; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px; }
+        /* Banner 樣式優化 */
+        .banner-container { width: 100%; height: 200px; overflow: hidden; position: relative; border-bottom: 4px solid #00f2ff; margin-bottom: 20px; background: #111; }
+        .banner-img { width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: 0.9; }
+        .banner-title { position: absolute; bottom: 10px; left: 20px; font-size: 2rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px #00f2ff; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 5px; border: 1px solid #00f2ff; }
 
         .pixel-box { border: 2px solid #fff; padding: 20px; margin-bottom: 20px; width: 90%; max-width: 500px; background: #111; border-radius: 12px; box-sizing: border-box; }
         
-        /* 戰鬥力面板 */
         .cp-display { text-align: center; margin-bottom: 15px; }
         .cp-label { font-size: 0.9rem; color: #aaa; letter-spacing: 2px; }
         .cp-value { font-size: 3.5rem; color: #ff3131; font-weight: 900; text-shadow: 0 0 15px #ff0000; font-family: monospace; }
         
-        /* 累積數據格 */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .stat-card { background: #222; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #444; }
         .stat-val { font-size: 1.2rem; color: #39ff14; font-weight: bold; }
@@ -46,7 +44,7 @@
 <body>
 
     <div class="banner-container">
-        <img src="https://meee.com.tw/BP8c5Cn" class="banner-img" id="bannerImg">
+        <img src="" class="banner-img" id="bannerImg" onerror="this.src='https://via.placeholder.com/800x450/000033/00f2ff?text=TBA360+Loading...'">
         <div class="banner-title">TBA360 戰情室</div>
     </div>
 
@@ -90,8 +88,8 @@
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <select id="f_type">
                     <option value="🚴 騎行">🚴 騎行</option>
-                    <option value="🏃 跑步">🏃 跑步</option>
-                    <option value="🏋️ 重訓">🏋️ 重訓</option>
+                    <option value="🚶 快走">🚶 快走</option> <option value="🏃 跑步">🏃 跑步</option>
+                    <option value="🏀 打球">🏀 打球</option> <option value="🏋️ 重訓">🏋️ 重訓</option>
                     <option value="🧘 伸展">🧘 伸展</option>
                     <option value="🛌 休息">🛌 休息</option>
                 </select>
@@ -114,7 +112,7 @@
             </div>
             
             <div style="margin-top:10px; border:1px dashed #444; padding:10px; border-radius:8px;">
-                <label for="f_img_file" style="color:#aaa; font-size:0.9rem;">📸 圖片</label>
+                <label for="f_img_file" style="color:#aaa; font-size:0.9rem;">📸 圖片 (自動壓縮)</label>
                 <input type="file" id="f_img_file" accept="image/*" style="margin-top:5px;">
             </div>
             
@@ -135,15 +133,22 @@
 
     <script>
         // ==========================================
-        var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec"; // ★★★ 填入你的 GAS URL ★★★
+        // 1. 請填入你的 GAS 網址 (記得加引號)
+        var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec"; 
+        
+        // 2. 請填入 Banner 圖片的「直接連結」(結尾通常是 .jpg 或 .png)
+        // 提示：對你的圖床圖片按右鍵 -> 複製圖片位址
+        var BANNER_URL = "https://i.meee.com.tw/BP8c5Cn.png"; // 請換成真正的圖片位址
         // ==========================================
 
-        var LOCAL_KEY = "TBA360_V17_CP";
+        var LOCAL_KEY = "TBA360_V18_FINAL";
 
         window.onload = function() {
+            // 設定 Banner
+            if(BANNER_URL) {
+                document.getElementById('bannerImg').src = BANNER_URL;
+            }
             initApp();
-            // 如果你有生成的 Banner 網址，可以在這裡替換，或者直接在 HTML img src 修改
-            // document.getElementById('bannerImg').src = "你的圖片網址";
         };
 
         function initApp() {
@@ -183,34 +188,31 @@
         }
 
         function renderCloud(items) {
-            updateStatsAndCP(items); // 計算戰鬥力
+            updateStatsAndCP(items);
             renderList(items, "CLOUD");
         }
 
         function renderLocal() {
             var raw = localStorage.getItem(LOCAL_KEY);
             var items = raw ? JSON.parse(raw) : [];
-            updateStatsAndCP(items); // 計算戰鬥力
+            updateStatsAndCP(items);
             renderList(items, "LOCAL");
         }
 
-        // 核心：戰鬥力與累積計算
         function updateStatsAndCP(items) {
             var totalDist = 0;
             var totalTime = 0;
             var totalCal = 0;
             var count = 0;
-            
-            // 抓取最新一筆的體重與睡眠 (如果是舊資料沒有體重，預設 80)
             var currentWeight = 80; 
             var currentSleep = 60;
+            
             if (items.length > 0) {
                 if (items[0].weight) currentWeight = parseFloat(items[0].weight);
                 if (items[0].sleep) currentSleep = parseFloat(items[0].sleep);
             }
 
             items.forEach(function(it) {
-                // 只計算有運動的類型 (排除休息)
                 if (it.type !== "🛌 休息") {
                     count++;
                     totalDist += parseFloat(it.dist || 0);
@@ -219,45 +221,22 @@
                 }
             });
 
-            // 更新 UI
             document.getElementById('totalDist').innerText = totalDist.toFixed(1) + " km";
             document.getElementById('totalTime').innerText = totalTime.toFixed(1) + " h";
             document.getElementById('totalCal').innerText = totalCal;
             document.getElementById('totalCount').innerText = count;
 
-            // 等級條
             var lv = Math.floor(count / 5) + 1;
             document.getElementById('lvDisplay').innerHTML = "Lv." + lv + " 騎士";
             document.getElementById('xpBar').style.width = (count % 5) * 20 + "%";
 
-            // ★★★ 戰鬥力公式 ★★★
-            // 公式：(累計距離+時間+卡路里) * (1 + (次數 + (80-體重)*10 + (睡眠/60) + 次數)/100)
-            // 你的公式裡次數加了兩次，這裡照做以達到加權效果
             var base = totalDist + totalTime + totalCal;
             var weightBonus = (80 - currentWeight) * 10;
             var sleepBonus = currentSleep / 60;
             var multiplier = 1 + (count + weightBonus + sleepBonus + count) / 100;
-            
             var cp = Math.floor(base * multiplier);
             
-            // 數字跳動特效
-            animateValue("cpVal", 0, cp, 1000);
-        }
-
-        function animateValue(id, start, end, duration) {
-            var obj = document.getElementById(id);
-            var range = end - start;
-            var current = start;
-            var increment = end > start ? Math.ceil(range / 20) : 0;
-            var stepTime = Math.abs(Math.floor(duration / 20));
-            var timer = setInterval(function() {
-                current += increment;
-                if (current >= end) {
-                    current = end;
-                    clearInterval(timer);
-                }
-                obj.innerHTML = current.toLocaleString(); // 加逗號
-            }, stepTime);
+            document.getElementById('cpVal').innerText = cp.toLocaleString();
         }
 
         function renderList(items, source) {
@@ -271,9 +250,9 @@
                     "<div style='display:flex; justify-content:space-between;'><b>📅 " + it.date + "</b><span>" + it.knee + "</span></div>" +
                     (it.img ? '<img src="'+it.img+'" class="log-img">' : '') +
                     "<div style='font-size:0.9rem; margin:5px 0; color:#00f2ff;'>" + 
-                        (it.dist>0 ? "跑騎 "+it.dist+"k " : "") + 
-                        (it.time>0 ? "花費 "+it.time+"h " : "") + 
-                        (it.cal>0 ? "燃燒 "+it.cal+"cal" : "") + 
+                        (it.dist>0 ? it.dist+"km " : "") + 
+                        (it.time>0 ? it.time+"h " : "") + 
+                        (it.cal>0 ? "🔥"+it.cal : "") + 
                     "</div>" +
                     "<p style='color:#ddd; font-size:0.9rem;'>" + (it.note || "") + "</p>" +
                     "<div style='font-size:0.8rem; color:#888;'>💤 " + it.sleep + " | ⚖️ " + it.weight + "kg</div>";
