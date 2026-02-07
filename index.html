@@ -3,24 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TBA360 v24</title>
+<title>TBA360 v25 Final Art</title>
 <style>
 /* 基礎設定 */
 body { background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
 
-/* 1. Banner 圖片區 (使用背景圖方式載入，更穩定) */
+/* 1. Banner 圖片區 (高度增加 + 完整顯示) */
 .banner { 
-    width: 100%; height: 200px; 
+    width: 100%; 
+    height: 300px; /* 高度增加，讓圖更清楚 */
+    background-color: #000; /* 背景色 */
     background-image: url('https://i.meee.com.tw/0neg3F9.png'); 
-    background-size: cover; background-position: center; 
-    border-bottom: 4px solid #00f2ff; margin-bottom: 20px; 
+    background-size: contain; /* 改為 contain，確保整張圖都看得到 */
+    background-repeat: no-repeat;
+    background-position: center; 
+    border-bottom: 4px solid #00f2ff; 
+    margin-bottom: 20px; 
     position: relative;
 }
+
+/* Banner 文字微調，移到右下角避免擋住主圖 */
 .banner-text {
-    position: absolute; bottom: 10px; left: 20px;
-    font-size: 2rem; font-weight: bold; font-style: italic;
-    text-shadow: 0 0 10px #00f2ff;
-    background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 5px;
+    position: absolute; bottom: 10px; right: 10px;
+    font-size: 1.5rem; font-weight: bold; font-style: italic;
+    color: #fff; text-shadow: 0 0 10px #00f2ff;
+    background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 5px;
+    border: 1px solid #00f2ff;
 }
 
 /* 2. 容器樣式 */
@@ -263,33 +271,3 @@ function render(list) {
             <div class="item-head">
                 <b style="color:#00f2ff">${item.date}</b>
                 <span class="tag">${item.type}</span>
-            </div>
-            <div style="margin:5px 0;color:#aaa;font-size:0.9rem">${item.knee} | 💤${item.sleep} | ⚖️${item.weight}kg</div>
-            <div style="color:#39ff14;font-size:0.9rem;font-weight:bold">
-                ${item.dist?item.dist+'km ':''} ${item.time?item.time+'h ':''} ${item.cal?'🔥'+item.cal:''}
-            </div>
-            <div style="color:#fff;margin-top:5px;font-size:0.95rem">${item.note||''}</div>
-            ${item.img ? '<img src="'+item.img+'">' : ''}
-        `;
-        elList.appendChild(div);
-    });
-
-    // 更新面板數據
-    document.getElementById('tDist').innerText = cDist.toFixed(1);
-    document.getElementById('tTime').innerText = cTime.toFixed(1);
-    document.getElementById('tCal').innerText = cCal;
-    document.getElementById('tCount').innerText = cCount;
-    
-    // 更新等級條
-    var lv = Math.floor(cCount/5)+1;
-    document.getElementById('lvDisp').innerText = "Lv." + lv + " 騎士";
-    document.getElementById('xpBar').style.width = (cCount%5)*20 + "%";
-
-    // 戰鬥力公式
-    var base = cDist + cTime + cCal;
-    var multi = 1 + (cCount + (80-lastW)*10 + (lastS/60) + cCount)/100;
-    document.getElementById('cpVal').innerText = Math.floor(base * multi).toLocaleString();
-}
-</script>
-</body>
-</html>
