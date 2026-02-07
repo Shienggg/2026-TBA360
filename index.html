@@ -133,6 +133,7 @@
     // ==========================================
 
     var LOCAL_KEY = "TBA360_V20_CLEAN";
+    var myChart = null; // 全域變數，解決圖表重複錯誤
 
     window.onload = function() {
         if(BANNER_URL) {
@@ -227,4 +228,137 @@
         var multiplier = 1 + (count + weightBonus + sleepBonus + count) / 100;
         var cp = Math.floor(base * multiplier);
         
-        document.getElementById('cpVal').innerText = cp
+        document.getElementById('cpVal').innerText = cp.toLocaleString();
+    }
+
+    function renderList(items, source) {
+        var container = document.getElementById('logContainer');
+        container.innerHTML = "";
+        items.forEach(function(it) {
+            var div = document.createElement('div');
+            div.className = "log-item";
+            div.innerHTML = 
+                "<span class='tag-type'>" + (it.type || "紀錄") + "</span>" +
+                "<div style='display:flex; justify-content:space-between;'><b>📅 " + it.date + "</b><span>" + it.knee + "</span></div>" +
+                (it.img ? '<img src="'+it.img+'" class="log-img">' : '') +
+                "<div style='font-size:0.9rem; margin:5px 0; color:#00f2ff;'>" + 
+                    (it.dist>0 ? it.dist+"km " : "") + 
+                    (it.time>0 ? it.time+"h " : "") + 
+                    (it.cal>0 ? "🔥"+it.cal : "") + 
+                "</div>" +
+                "<p style='color:#ddd; font-size:0.9rem;'>" + (it.note || "") + "</p>" +
+                "<div style='font-size:0.8rem; color:#888;'>💤 " + it.sleep + " | ⚖️ " + it.weight + "kg</div>";
+            container.appendChild(div);
+        });
+        drawChart(items);
+    }
+
+    function processForm() {
+        var btn = document.getElementById('subBtn');
+        btn.innerText = "上傳中...";
+        btn.disabled = true;
+
+        var file = document.getElementById('f_img_file').files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    var ctx = canvas.getContext('2d');
+                    var maxDim = 450;
+                    var w = img.width; var h = img.height;
+                    if (w > h) { if (w > maxDim) { h *= maxDim/w; w = maxDim; } } 
+                    else { if (h > maxDim) { w *= maxDim/h; h = maxDim; } }
+                    canvas.width = w; canvas.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    saveData(canvas.toDataURL('image/jpeg', 0.6));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            saveData("");
+        }
+    }
+
+    function saveData(imgData) {
+        var entry = {
+            date: document.getElementById('f_date').value,
+            type: document.getElementById('f_type').value,
+            knee: document.getElementById('f_knee').value,
+            dist: document.getElementById('f_dist').value,
+            time: document.getElementById('f_time').value,
+            cal: document.getElementById('f_cal').value,
+            sleep: document.getElementById('f_sleep').value,
+            weight: document.getElementById('f_weight').value,
+            note: document.getElementById('f_note').value,
+            img: imgData
+        };
+
+        var raw = localStorage.getItem(LOCAL_KEY);
+        var items = raw ? JSON.parse(raw) : [];
+        items.unshift(entry);
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
+        renderLocal(); 
+
+        if (GAS_URL && GAS_URL.startsWith("http")) {
+            fetch(GAS_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(entry)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("✅ 戰鬥力已更新！");
+                resetForm();
+                fetchCloudData(); 
+            })
+            .catch(err => {
+                alert("⚠️ 本機已存，雲端失敗");
+                resetForm();
+            });
+        } else {
+            alert("✅ 本機已存");
+            resetForm();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('mainForm').reset();
+        document.getElementById('f_date').value = new Date().toISOString().substr(0, 10);
+        var btn = document.getElementById('subBtn');
+        btn.innerText = "確認紀錄";
+        btn.disabled = false;
+    }
+
+    function drawChart(items) {
+        if (typeof Chart === "undefined") return;
+        var ctx = document.getElementById('chartCanvas').getContext('2d');
+        
+        // 使用全域變數確保圖表正確銷毀，解決 'Canvas is already in use' 錯誤
+        if (myChart) {
+            myChart.destroy();
+        }
+
+        var d = items.slice().reverse().slice(-7);
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: d.map(function(x){ return x.date.substr(5); }),
+                datasets: [
+                    { label: '體重', data: d.map(function(x){ return x.weight; }), borderColor: '#00f2ff', borderWidth: 2, tension: 0.1 },
+                    { label: '睡眠', data: d.map(function(x){ return x.sleep; }), borderColor: '#39ff14', borderWidth: 2, tension: 0.1 }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { y: { grid: { color: '#333' } }, x: { grid: { display: false } } }, 
+                plugins: { legend: { labels: { color: '#fff' } } } 
+            }
+        });
+    }
+</script>
+</body>
+</html>
