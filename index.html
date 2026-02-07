@@ -3,37 +3,67 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TBA360 v23 Final</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<title>TBA360 v24</title>
 <style>
-/* CSS 樣式區 */
-body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
-/* 改用 CSS 漸層取代圖片，避免讀取錯誤 */
-.banner { width: 100%; height: 180px; background: linear-gradient(135deg, #111 0%, #003333 100%); border-bottom: 4px solid #00f2ff; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; position: relative; }
-.banner h1 { font-size: 2.5rem; color: #fff; text-shadow: 0 0 20px #00f2ff; margin: 0; font-style: italic; }
-.box { border: 1px solid #444; padding: 20px; margin-bottom: 20px; width: 90%; max-width: 500px; background: #111; border-radius: 12px; box-sizing: border-box; }
-.big-text { font-size: 3.5rem; color: #ff3131; font-weight: 900; text-align: center; font-family: monospace; text-shadow: 0 0 15px #ff0000; margin: 10px 0; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; text-align: center; }
-.card { background: #222; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+/* 基礎設定 */
+body { background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
+
+/* 1. Banner 圖片區 (使用背景圖方式載入，更穩定) */
+.banner { 
+    width: 100%; height: 200px; 
+    background-image: url('https://i.meee.com.tw/0neg3F9.png'); 
+    background-size: cover; background-position: center; 
+    border-bottom: 4px solid #00f2ff; margin-bottom: 20px; 
+    position: relative;
+}
+.banner-text {
+    position: absolute; bottom: 10px; left: 20px;
+    font-size: 2rem; font-weight: bold; font-style: italic;
+    text-shadow: 0 0 10px #00f2ff;
+    background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 5px;
+}
+
+/* 2. 容器樣式 */
+.box { border: 1px solid #333; padding: 20px; margin-bottom: 20px; width: 90%; max-width: 500px; background: #111; border-radius: 12px; box-sizing: border-box; }
+
+/* 3. 戰鬥力面板 */
+.cp-title { text-align: center; color: #888; letter-spacing: 2px; font-size: 0.9rem; }
+.cp-val { font-size: 3.5rem; color: #ff3131; font-weight: 900; text-align: center; font-family: monospace; text-shadow: 0 0 15px #f00; margin: 5px 0; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; text-align: center; }
+.card { background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
 .val { font-size: 1.2rem; color: #39ff14; font-weight: bold; }
 .lbl { font-size: 0.8rem; color: #888; margin-top: 2px; }
-input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+
+/* 4. 等級條 */
+.lv-row { display: flex; justify-content: space-between; margin-top: 15px; color: #00f2ff; font-weight: bold; }
+.days { color: #39ff14; }
+.xp-bg { width: 100%; height: 8px; background: #333; margin-top: 5px; border-radius: 4px; overflow: hidden; }
+.xp-fill { height: 100%; background: #00f2ff; width: 0%; transition: width 0.5s; }
+
+/* 5. 輸入表單 */
+input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 6px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
 button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: #000; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
+button:disabled { background: #555; color: #888; }
+
+/* 6. 列表樣式 */
 .item { border: 1px solid #333; padding: 15px; margin-top: 10px; background: #1a1a1a; border-radius: 8px; }
-.item img { width: 100%; margin-top: 10px; border-radius: 5px; }
-/* 系統日誌區 */
-#sys-log { width: 90%; max-width: 500px; background: #000; border: 1px solid #333; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; height: 150px; overflow-y: scroll; margin-top: 20px; }
+.item-head { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.tag { background: #004444; color: #00f2ff; padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; }
+.item img { width: 100%; margin-top: 10px; border-radius: 5px; border: 1px solid #333; }
+
+#loading { text-align: center; color: #00f2ff; margin: 10px 0; display: none; }
 </style>
 </head>
 <body>
 
 <div class="banner">
-    <h1>TBA360 戰情室</h1>
+    <div class="banner-text">TBA360 戰情室</div>
 </div>
 
 <div class="box">
-    <div style="text-align:center;color:#aaa;letter-spacing:2px">戰鬥力 (CP)</div>
-    <div class="big-text" id="cpVal">0</div>
+    <div class="cp-title">戰鬥力 (CP)</div>
+    <div class="cp-val" id="cpVal">0</div>
     
     <div class="grid">
         <div class="card"><div class="val" id="tDist">0</div><div class="lbl">里程 (km)</div></div>
@@ -42,17 +72,17 @@ button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: 
         <div class="card"><div class="val" id="tCount">0</div><div class="lbl">次數</div></div>
     </div>
 
-    <div style="display:flex;justify-content:space-between;margin-top:15px;color:#00f2ff;font-weight:bold">
+    <div class="lv-row">
         <span id="lvDisp">Lv.1 騎士</span>
-        <span id="daysDisp" style="color:#39ff14">---</span>
+        <span class="days" id="daysDisp">---</span>
     </div>
-    <div style="width:100%;height:8px;background:#333;margin-top:10px;border-radius:4px"><div id="xpBar" style="height:100%;background:#00f2ff;width:0%"></div></div>
+    <div class="xp-bg"><div class="xp-fill" id="xpBar"></div></div>
 </div>
 
 <div class="box">
     <h3 style="margin-top:0;border-bottom:1px solid #333;padding-bottom:10px">➤ 寫入紀錄</h3>
     <input type="date" id="i_date">
-    <div class="grid">
+    <div class="grid" style="margin-top:0">
         <select id="i_type">
             <option>🚴 騎行</option><option>🚶 快走</option><option>🏃 跑步</option>
             <option>🏀 打球</option><option>🏋️ 重訓</option><option>🛌 休息</option>
@@ -69,86 +99,58 @@ button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: 
         <input type="number" id="i_weight" placeholder="體重" step="0.1">
     </div>
     <div style="margin-top:10px;border:1px dashed #444;padding:10px">
-        <label>📸 圖片</label>
+        <label style="color:#aaa;font-size:0.9rem">📸 圖片</label>
         <input type="file" id="i_file" accept="image/*" style="margin-top:5px">
     </div>
     <textarea id="i_note" placeholder="心得..."></textarea>
     <button id="btnSave">送出紀錄</button>
 </div>
 
-<div class="box"><canvas id="chartC" height="200"></canvas></div>
-
 <div class="box">
-    <h3>➤ 歷史紀錄</h3>
+    <h3 style="margin-top:0">➤ 歷史紀錄</h3>
+    <div id="loading">☁️ 同步中...</div>
     <div id="list"></div>
 </div>
 
-<div id="sys-log"></div>
-
 <script>
-// ▼▼▼ 設定區 ▼▼▼
+// ▼ 設定區 ▼
 var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-// ▲▲▲▲▲▲▲▲▲▲
-
-var KEY = "TBA360_V23";
-var chartInstance = null;
-
-// 日誌功能
-function log(msg) {
-    var box = document.getElementById('sys-log');
-    var time = new Date().toLocaleTimeString();
-    box.innerHTML = `<div>[${time}] ${msg}</div>` + box.innerHTML;
-}
-
-window.onerror = function(msg) {
-    log("❌ 錯誤: " + msg);
-};
+var KEY = "TBA360_V24";
+// ▲ 設定區 ▲
 
 window.onload = function() {
-    log("🚀 系統啟動中...");
-    
-    // 初始化日期
+    // 1. 初始化日期
     document.getElementById('i_date').value = new Date().toISOString().slice(0,10);
     
-    // 倒數計時
+    // 2. 倒數計時
     var diff = new Date(2026,10,13) - new Date();
     var d = Math.floor(diff/86400000);
-    document.getElementById('daysDisp').innerText = (d>0?d:0) + " DAYS";
-    
-    // 1. 載入本機
-    loadLocal();
-    
-    // 2. 載入雲端
-    if(GAS_URL) {
-        loadCloud();
-    } else {
-        log("⚠️ 未設定 GAS 網址，僅使用本機模式");
-    }
+    document.getElementById('daysDisp').innerText = (d>0?d:0) + " DAYS LEFT";
 
+    // 3. 載入資料
+    loadLocal(); // 先載入本機 (秒開)
+    if(GAS_URL) loadCloud(); // 再載入雲端
+
+    // 4. 按鈕事件
     document.getElementById('btnSave').onclick = saveData;
 };
 
 function loadLocal() {
-    log("📂 讀取本機資料...");
-    try {
-        var d = JSON.parse(localStorage.getItem(KEY) || "[]");
-        render(d);
-        log("✅ 本機資料載入完成: " + d.length + " 筆");
-    } catch(e) {
-        log("❌ 本機讀取失敗: " + e);
-    }
+    var d = JSON.parse(localStorage.getItem(KEY) || "[]");
+    render(d);
 }
 
 function loadCloud() {
-    log("☁️ 正在連線雲端...");
+    document.getElementById('loading').style.display = 'block';
     fetch(GAS_URL)
     .then(r => r.json())
     .then(d => {
-        log("✅ 雲端同步成功! 下載 " + d.length + " 筆");
+        document.getElementById('loading').style.display = 'none';
         if(d && d.length) render(d);
     })
     .catch(e => {
-        log("⚠️ 雲端連線失敗 (可能是跨域或網址錯誤)");
+        document.getElementById('loading').style.display = 'none';
+        console.log("Cloud Err:", e);
     });
 }
 
@@ -156,8 +158,6 @@ function saveData() {
     var btn = document.getElementById('btnSave');
     btn.innerText = "處理中...";
     btn.disabled = true;
-
-    log("💾 正在處理存檔...");
 
     var file = document.getElementById('i_file').files[0];
     if(file) {
@@ -201,16 +201,14 @@ function commitSave(img64) {
         img: img64
     };
 
-    // 本機存
+    // 1. 存本機
     var list = JSON.parse(localStorage.getItem(KEY) || "[]");
     list.unshift(obj);
     localStorage.setItem(KEY, JSON.stringify(list));
     render(list);
-    log("✅ 已寫入本機");
 
-    // 雲端存
+    // 2. 存雲端
     if(GAS_URL) {
-        log("📤 正在上傳雲端...");
         fetch(GAS_URL, {
             method: 'POST',
             headers: {'Content-Type': 'text/plain;charset=utf-8'},
@@ -218,18 +216,16 @@ function commitSave(img64) {
         })
         .then(r => r.json())
         .then(d => {
-            log("✅ 雲端上傳成功!");
-            alert("紀錄成功！");
+            alert("✅ 戰鬥力已更新！");
             resetUI();
             loadCloud();
         })
         .catch(e => {
-            log("⚠️ 雲端上傳失敗: " + e);
-            alert("本機已存 (雲端失敗)");
+            alert("⚠️ 已存入本機 (雲端連線失敗)");
             resetUI();
         });
     } else {
-        alert("本機已存");
+        alert("✅ 本機已存");
         resetUI();
     }
 }
@@ -264,68 +260,35 @@ function render(list) {
         var div = document.createElement('div');
         div.className = "item";
         div.innerHTML = `
-            <div style="display:flex;justify-content:space-between">
+            <div class="item-head">
                 <b style="color:#00f2ff">${item.date}</b>
-                <span style="background:#004444;padding:2px 5px;font-size:0.8rem">${item.type}</span>
+                <span class="tag">${item.type}</span>
             </div>
-            <div style="margin:5px 0;color:#aaa">${item.knee} | 💤${item.sleep} | ⚖️${item.weight}kg</div>
-            <div style="color:#39ff14;font-size:0.9rem">
-                ${item.dist?item.dist+'k ':''} ${item.time?item.time+'h ':''} ${item.cal?'🔥'+item.cal:''}
+            <div style="margin:5px 0;color:#aaa;font-size:0.9rem">${item.knee} | 💤${item.sleep} | ⚖️${item.weight}kg</div>
+            <div style="color:#39ff14;font-size:0.9rem;font-weight:bold">
+                ${item.dist?item.dist+'km ':''} ${item.time?item.time+'h ':''} ${item.cal?'🔥'+item.cal:''}
             </div>
-            <div style="color:#fff;margin-top:5px">${item.note||''}</div>
+            <div style="color:#fff;margin-top:5px;font-size:0.95rem">${item.note||''}</div>
             ${item.img ? '<img src="'+item.img+'">' : ''}
         `;
         elList.appendChild(div);
     });
 
-    // 更新面板
+    // 更新面板數據
     document.getElementById('tDist').innerText = cDist.toFixed(1);
     document.getElementById('tTime').innerText = cTime.toFixed(1);
     document.getElementById('tCal').innerText = cCal;
     document.getElementById('tCount').innerText = cCount;
     
+    // 更新等級條
     var lv = Math.floor(cCount/5)+1;
     document.getElementById('lvDisp').innerText = "Lv." + lv + " 騎士";
     document.getElementById('xpBar').style.width = (cCount%5)*20 + "%";
 
-    // 戰鬥力
+    // 戰鬥力公式
     var base = cDist + cTime + cCal;
     var multi = 1 + (cCount + (80-lastW)*10 + (lastS/60) + cCount)/100;
     document.getElementById('cpVal').innerText = Math.floor(base * multi).toLocaleString();
-
-    // 嘗試畫圖，如果被外掛擋住就忽略
-    try {
-        drawChart(list);
-    } catch(e) {
-        log("⚠️ 圖表繪製失敗 (可能被瀏覽器攔截)，但不影響紀錄");
-    }
-}
-
-function drawChart(list) {
-    if(typeof Chart === 'undefined') return;
-    var ctx = document.getElementById('chartC');
-    
-    // 安全銷毀舊圖表
-    if (chartInstance) {
-        chartInstance.destroy();
-    }
-    
-    var d = list.slice().reverse().slice(-7);
-    chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: d.map(x => x.date.slice(5)),
-            datasets: [
-                {label:'體重', data:d.map(x=>x.weight), borderColor:'#00f2ff', tension:0.1},
-                {label:'睡眠', data:d.map(x=>x.sleep), borderColor:'#39ff14', tension:0.1}
-            ]
-        },
-        options: {
-            responsive: true,
-            scales: { y:{grid:{color:'#333'}}, x:{grid:{display:false}} },
-            plugins: { legend:{labels:{color:'#fff'}} }
-        }
-    });
 }
 </script>
 </body>
