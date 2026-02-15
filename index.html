@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TBA360 v27 Secure</title>
+<title>TBA360 v28</title>
 <style>
 /* 基礎樣式 */
 body { background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
@@ -43,8 +43,6 @@ body { background: #000; color: #fff; font-family: -apple-system, system-ui, san
 input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 6px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
 button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: #000; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
 button:disabled { background: #555; color: #888; }
-
-/* 密碼框特別樣式 */
 .pass-input { border: 1px solid #ff3131; background: #220000; color: #ffaaaa; letter-spacing: 5px; text-align: center; font-weight: bold; }
 
 /* 列表 */
@@ -53,7 +51,7 @@ button:disabled { background: #555; color: #888; }
 .tag { background: #004444; color: #00f2ff; padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; }
 .item img { width: 100%; margin-top: 10px; border-radius: 5px; border: 1px solid #333; }
 
-/* 留言板樣式 */
+/* 留言板 */
 .msg-item { border-bottom: 1px solid #333; padding: 10px 0; }
 .msg-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; }
 .msg-body { margin-top: 5px; font-size: 1rem; color: #ddd; }
@@ -74,8 +72,7 @@ button:disabled { background: #555; color: #888; }
     
     <div class="grid">
         <div class="card"><div class="val" id="tDist">0</div><div class="lbl">里程 (km)</div></div>
-        <div class="card"><div class="val" id="tTime">0</div><div class="lbl">時數 (h)</div></div>
-        <div class="card"><div class="val" id="tCal">0</div><div class="lbl">卡路里</div></div>
+        <div class="card"><div class="val" id="tTime">0</div><div class="lbl">時數 (min)</div></div> <div class="card"><div class="val" id="tCal">0</div><div class="lbl">卡路里</div></div>
         <div class="card"><div class="val" id="tCount">0</div><div class="lbl">次數</div></div>
     </div>
 
@@ -109,7 +106,7 @@ button:disabled { background: #555; color: #888; }
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
         <input type="number" id="i_dist" placeholder="km" step="0.1">
-        <input type="number" id="i_time" placeholder="hr" step="0.1">
+        <input type="number" id="i_time" placeholder="min" step="1">
         <input type="number" id="i_cal" placeholder="cal">
     </div>
     <div class="grid">
@@ -121,22 +118,8 @@ button:disabled { background: #555; color: #888; }
         <input type="file" id="i_file" accept="image/*" style="margin-top:5px">
     </div>
     <textarea id="i_note" placeholder="心得..."></textarea>
-    
     <input type="password" id="i_pass" class="pass-input" placeholder="請輸入密碼">
-    
     <button id="btnSave">送出紀錄</button>
-</div>
-
-<div class="box">
-    <h3 style="margin-top:0;border-bottom:1px solid #333;padding-bottom:10px">💬 戰友留言板</h3>
-    <div id="msgList" style="max-height:300px;overflow-y:auto;margin-bottom:10px">
-        <div style="color:#555;text-align:center">暫無留言</div>
-    </div>
-    <div style="border-top:1px dashed #444;padding-top:10px">
-        <input type="text" id="m_name" placeholder="您的暱稱 (例如: 老婆)">
-        <input type="text" id="m_text" placeholder="寫句加油的話...">
-        <button id="btnMsg" style="background:#004444;color:#00f2ff;border:1px solid #00f2ff">📢 發送留言</button>
-    </div>
 </div>
 
 <div class="box">
@@ -145,12 +128,27 @@ button:disabled { background: #555; color: #888; }
     <div id="list"></div>
 </div>
 
+<div class="box">
+    <h3 style="margin-top:0;border-bottom:1px solid #333;padding-bottom:10px">💬 戰友留言板</h3>
+    <div id="msgList" style="max-height:300px;overflow-y:auto;margin-bottom:10px">
+        <div style="color:#555;text-align:center">暫無留言</div>
+    </div>
+    <div style="border-top:1px dashed #444;padding-top:10px">
+        <input type="text" id="m_name" placeholder="您的暱稱">
+        <input type="text" id="m_text" placeholder="寫句加油的話...">
+        <button id="btnMsg" style="background:#004444;color:#00f2ff;border:1px solid #00f2ff">📢 發送留言 (+1% CP)</button>
+    </div>
+</div>
+
 <script>
 // ▼ 設定區 ▼
 var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-var KEY = "TBA360_V27";
-var ADMIN_PASS = "8888"; // ★★★ 設定你的密碼 ★★★
+var KEY = "TBA360_V28";
+var ADMIN_PASS = "8888"; 
 // ▲ 設定區 ▲
+
+// 全域變數：留言數 (用來計算戰鬥力)
+var globalMsgCount = 0;
 
 window.onload = function() {
     document.getElementById('i_date').value = new Date().toISOString().slice(0,10);
@@ -177,14 +175,19 @@ function loadCloud() {
     .then(r => r.json())
     .then(d => {
         document.getElementById('loading').style.display = 'none';
-        // d 包含了 { logs: [...], msgs: [...] }
+        
+        // 1. 處理留言
+        if(d.msgs) {
+            globalMsgCount = d.msgs.length; // 更新全域留言數
+            renderMsgs(d.msgs);
+        }
+
+        // 2. 處理日記
         if(d.logs) {
-            render(d.logs);
             // 同步回本機
             localStorage.setItem(KEY, JSON.stringify(d.logs));
-        }
-        if(d.msgs) {
-            renderMsgs(d.msgs);
+            // 重新渲染 (這時候會用到新的 globalMsgCount 來算戰鬥力)
+            render(d.logs);
         }
     })
     .catch(e => {
@@ -194,12 +197,8 @@ function loadCloud() {
 }
 
 function saveData() {
-    // 1. 檢查密碼
     var pass = document.getElementById('i_pass').value;
-    if(pass !== ADMIN_PASS) {
-        alert("❌ 密碼錯誤！無法寫入紀錄。");
-        return;
-    }
+    if(pass !== ADMIN_PASS) { alert("❌ 密碼錯誤"); return; }
 
     var btn = document.getElementById('btnSave');
     btn.innerText = "處理中...";
@@ -246,12 +245,12 @@ function commitSave(img64) {
         })
         .then(r => r.json())
         .then(d => {
-            alert("✅ 紀錄成功！");
+            alert("✅ 紀錄成功");
             resetUI();
             loadCloud();
         })
         .catch(e => {
-            alert("⚠️ 已存入本機 (雲端連線失敗)");
+            alert("⚠️ 存入本機 (雲端失敗)");
             resetUI();
         });
     } else {
@@ -270,7 +269,7 @@ function sendMsg() {
     btn.disabled = true;
 
     var msgData = {
-        action: "msg", // 告訴後端這是留言
+        action: "msg", 
         time: new Date().toISOString().slice(0,10),
         name: name,
         text: text
@@ -284,11 +283,11 @@ function sendMsg() {
         })
         .then(r => r.json())
         .then(d => {
-            alert("✅ 留言成功！");
+            alert("✅ 留言成功！戰鬥力 UP！");
             document.getElementById('m_text').value = "";
-            btn.innerText = "📢 發送留言";
+            btn.innerText = "📢 發送留言 (+1% CP)";
             btn.disabled = false;
-            loadCloud(); // 重新整理看留言
+            loadCloud(); 
         })
         .catch(e => {
             alert("發送失敗");
@@ -352,7 +351,7 @@ function render(list) {
             </div>
             <div style="margin:5px 0;color:#aaa;font-size:0.9rem">${item.knee} | 💤${item.sleep} | ⚖️${item.weight}kg</div>
             <div style="color:#39ff14;font-size:0.9rem;font-weight:bold">
-                ${item.dist?item.dist+'km ':''} ${item.time?item.time+'h ':''} ${item.cal?'🔥'+item.cal:''}
+                ${item.dist?item.dist+'km ':''} ${item.time?item.time+'min ':''} ${item.cal?'🔥'+item.cal:''}
             </div>
             <div style="color:#fff;margin-top:5px;font-size:0.95rem">${item.note||''}</div>
             ${item.img ? '<img src="'+item.img+'">' : ''}
@@ -360,22 +359,24 @@ function render(list) {
         elList.appendChild(div);
     });
 
-    // 面板數據
     document.getElementById('tDist').innerText = cDist.toFixed(1);
-    document.getElementById('tTime').innerText = cTime.toFixed(1);
+    document.getElementById('tTime').innerText = cTime; // 顯示分鐘數
     document.getElementById('tCal').innerText = cCal;
     document.getElementById('tCount').innerText = cCount;
     
-    // 等級與戰鬥力
     var lv = Math.floor(cCount/5)+1;
     document.getElementById('lvDisp').innerText = "Lv." + lv + " 騎士";
     document.getElementById('xpBar').style.width = (cCount%5)*20 + "%";
 
-    var base = cDist + cTime + cCal;
-    var multi = 1 + (cCount + (80-lastW)*10 + (lastS/60) + cCount)/100;
+    // ★★★ 戰鬥力公式更新 ★★★
+    // 基礎值：因為時間改成 min，數值變大，基礎 CP 會上升很多
+    var base = cDist + cTime + cCal; 
+    // 倍率：加入 globalMsgCount (留言數)
+    var multi = 1 + (cCount + (80-lastW)*10 + (lastS/60) + cCount + globalMsgCount)/100;
+    
     document.getElementById('cpVal').innerText = Math.floor(base * multi).toLocaleString();
 
-    // 體能狀況 (紅綠燈)
+    // 體能狀況
     var sleepList = list.filter(function(x){ return x.sleep && parseFloat(x.sleep)>0; });
     var weightList = list.filter(function(x){ return x.weight && parseFloat(x.weight)>0; });
 
