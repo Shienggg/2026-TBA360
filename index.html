@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TBA360 v26 Status</title>
+<title>TBA360 v27 Secure</title>
 <style>
-/* 基礎設定 */
+/* 基礎樣式 */
 body { background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
 
 /* Banner */
@@ -25,23 +25,15 @@ body { background: #000; color: #fff; font-family: -apple-system, system-ui, san
 /* 容器 */
 .box { border: 1px solid #333; padding: 20px; margin-bottom: 20px; width: 90%; max-width: 500px; background: #111; border-radius: 12px; box-sizing: border-box; }
 
-/* 戰鬥力 */
-.cp-title { text-align: center; color: #888; letter-spacing: 2px; font-size: 0.9rem; }
+/* 戰鬥力與面板 */
 .cp-val { font-size: 3.5rem; color: #ff3131; font-weight: 900; text-align: center; font-family: monospace; text-shadow: 0 0 15px #f00; margin: 5px 0; }
-
-/* 數據網格 */
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; text-align: center; }
 .card { background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
 .val { font-size: 1.2rem; color: #39ff14; font-weight: bold; }
 .lbl { font-size: 0.8rem; color: #888; margin-top: 2px; }
-
-/* 新增：體能狀況區 */
 .status-row { margin-top: 20px; padding-top: 15px; border-top: 1px dashed #333; display: flex; justify-content: space-around; }
-.status-item { text-align: center; }
 .status-val { font-size: 1.5rem; font-weight: bold; color: #fff; }
 .status-lbl { font-size: 0.8rem; color: #aaa; margin-top: 2px; }
-
-/* 等級條 */
 .lv-row { display: flex; justify-content: space-between; margin-top: 15px; color: #00f2ff; font-weight: bold; }
 .days { color: #39ff14; }
 .xp-bg { width: 100%; height: 8px; background: #333; margin-top: 5px; border-radius: 4px; overflow: hidden; }
@@ -52,11 +44,20 @@ input, select, textarea { width: 100%; background: #222; border: 1px solid #555;
 button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: #000; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
 button:disabled { background: #555; color: #888; }
 
+/* 密碼框特別樣式 */
+.pass-input { border: 1px solid #ff3131; background: #220000; color: #ffaaaa; letter-spacing: 5px; text-align: center; font-weight: bold; }
+
 /* 列表 */
 .item { border: 1px solid #333; padding: 15px; margin-top: 10px; background: #1a1a1a; border-radius: 8px; }
 .item-head { display: flex; justify-content: space-between; margin-bottom: 5px; }
 .tag { background: #004444; color: #00f2ff; padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; }
 .item img { width: 100%; margin-top: 10px; border-radius: 5px; border: 1px solid #333; }
+
+/* 留言板樣式 */
+.msg-item { border-bottom: 1px solid #333; padding: 10px 0; }
+.msg-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; }
+.msg-body { margin-top: 5px; font-size: 1rem; color: #ddd; }
+.msg-name { color: #39ff14; font-weight: bold; }
 
 #loading { text-align: center; color: #00f2ff; margin: 10px 0; display: none; }
 </style>
@@ -68,7 +69,7 @@ button:disabled { background: #555; color: #888; }
 </div>
 
 <div class="box">
-    <div class="cp-title">戰鬥力 (CP)</div>
+    <div style="text-align:center;color:#888;letter-spacing:2px">戰鬥力 (CP)</div>
     <div class="cp-val" id="cpVal">0</div>
     
     <div class="grid">
@@ -79,11 +80,11 @@ button:disabled { background: #555; color: #888; }
     </div>
 
     <div class="status-row">
-        <div class="status-item">
+        <div style="text-align:center">
             <div class="status-val" id="avgSleep">--</div>
             <div class="status-lbl">近3日均眠</div>
         </div>
-        <div class="status-item">
+        <div style="text-align:center">
             <div class="status-val" id="avgWeight">--</div>
             <div class="status-lbl">近3日均重</div>
         </div>
@@ -97,7 +98,7 @@ button:disabled { background: #555; color: #888; }
 </div>
 
 <div class="box">
-    <h3 style="margin-top:0;border-bottom:1px solid #333;padding-bottom:10px">➤ 寫入紀錄</h3>
+    <h3 style="margin-top:0;border-bottom:1px solid #333;padding-bottom:10px">🔒 寫入紀錄 (Admin)</h3>
     <input type="date" id="i_date">
     <div class="grid" style="margin-top:0">
         <select id="i_type">
@@ -120,7 +121,22 @@ button:disabled { background: #555; color: #888; }
         <input type="file" id="i_file" accept="image/*" style="margin-top:5px">
     </div>
     <textarea id="i_note" placeholder="心得..."></textarea>
+    
+    <input type="password" id="i_pass" class="pass-input" placeholder="請輸入密碼">
+    
     <button id="btnSave">送出紀錄</button>
+</div>
+
+<div class="box">
+    <h3 style="margin-top:0;border-bottom:1px solid #333;padding-bottom:10px">💬 戰友留言板</h3>
+    <div id="msgList" style="max-height:300px;overflow-y:auto;margin-bottom:10px">
+        <div style="color:#555;text-align:center">暫無留言</div>
+    </div>
+    <div style="border-top:1px dashed #444;padding-top:10px">
+        <input type="text" id="m_name" placeholder="您的暱稱 (例如: 老婆)">
+        <input type="text" id="m_text" placeholder="寫句加油的話...">
+        <button id="btnMsg" style="background:#004444;color:#00f2ff;border:1px solid #00f2ff">📢 發送留言</button>
+    </div>
 </div>
 
 <div class="box">
@@ -132,7 +148,8 @@ button:disabled { background: #555; color: #888; }
 <script>
 // ▼ 設定區 ▼
 var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-var KEY = "TBA360_V26";
+var KEY = "TBA360_V27";
+var ADMIN_PASS = "8888"; // ★★★ 設定你的密碼 ★★★
 // ▲ 設定區 ▲
 
 window.onload = function() {
@@ -146,6 +163,7 @@ window.onload = function() {
     if(GAS_URL) loadCloud();
 
     document.getElementById('btnSave').onclick = saveData;
+    document.getElementById('btnMsg').onclick = sendMsg;
 };
 
 function loadLocal() {
@@ -159,7 +177,15 @@ function loadCloud() {
     .then(r => r.json())
     .then(d => {
         document.getElementById('loading').style.display = 'none';
-        if(d && d.length) render(d);
+        // d 包含了 { logs: [...], msgs: [...] }
+        if(d.logs) {
+            render(d.logs);
+            // 同步回本機
+            localStorage.setItem(KEY, JSON.stringify(d.logs));
+        }
+        if(d.msgs) {
+            renderMsgs(d.msgs);
+        }
     })
     .catch(e => {
         document.getElementById('loading').style.display = 'none';
@@ -168,6 +194,13 @@ function loadCloud() {
 }
 
 function saveData() {
+    // 1. 檢查密碼
+    var pass = document.getElementById('i_pass').value;
+    if(pass !== ADMIN_PASS) {
+        alert("❌ 密碼錯誤！無法寫入紀錄。");
+        return;
+    }
+
     var btn = document.getElementById('btnSave');
     btn.innerText = "處理中...";
     btn.disabled = true;
@@ -184,20 +217,6 @@ function saveData() {
     } else {
         commitSave("");
     }
-}
-
-function resizeImg(src, cb) {
-    var img = new Image();
-    img.onload = function() {
-        var c = document.createElement('canvas');
-        var max = 450;
-        var w = img.width, h = img.height;
-        if(w>h){ if(w>max){h*=max/w; w=max}} else{ if(h>max){w*=max/h; h=max}}
-        c.width=w; c.height=h;
-        c.getContext('2d').drawImage(img,0,0,w,h);
-        cb(c.toDataURL('image/jpeg', 0.6));
-    };
-    img.src = src;
 }
 
 function commitSave(img64) {
@@ -227,12 +246,12 @@ function commitSave(img64) {
         })
         .then(r => r.json())
         .then(d => {
-            alert("✅ 戰鬥力已更新！");
+            alert("✅ 紀錄成功！");
             resetUI();
             loadCloud();
         })
         .catch(e => {
-            alert("⚠️ 已存入本機");
+            alert("⚠️ 已存入本機 (雲端連線失敗)");
             resetUI();
         });
     } else {
@@ -241,11 +260,67 @@ function commitSave(img64) {
     }
 }
 
+function sendMsg() {
+    var name = document.getElementById('m_name').value;
+    var text = document.getElementById('m_text').value;
+    if(!name || !text) { alert("請輸入暱稱和內容"); return; }
+
+    var btn = document.getElementById('btnMsg');
+    btn.innerText = "發送中...";
+    btn.disabled = true;
+
+    var msgData = {
+        action: "msg", // 告訴後端這是留言
+        time: new Date().toISOString().slice(0,10),
+        name: name,
+        text: text
+    };
+
+    if(GAS_URL) {
+        fetch(GAS_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'text/plain;charset=utf-8'},
+            body: JSON.stringify(msgData)
+        })
+        .then(r => r.json())
+        .then(d => {
+            alert("✅ 留言成功！");
+            document.getElementById('m_text').value = "";
+            btn.innerText = "📢 發送留言";
+            btn.disabled = false;
+            loadCloud(); // 重新整理看留言
+        })
+        .catch(e => {
+            alert("發送失敗");
+            btn.disabled = false;
+        });
+    }
+}
+
 function resetUI() {
     document.getElementById('btnSave').innerText = "送出紀錄";
     document.getElementById('btnSave').disabled = false;
     document.getElementById('i_note').value = "";
     document.getElementById('i_file').value = "";
+    document.getElementById('i_pass').value = "";
+}
+
+function renderMsgs(msgs) {
+    var el = document.getElementById('msgList');
+    if(!msgs || msgs.length === 0) {
+        el.innerHTML = '<div style="color:#555;text-align:center">暫無留言</div>';
+        return;
+    }
+    el.innerHTML = "";
+    msgs.forEach(m => {
+        var div = document.createElement('div');
+        div.className = "msg-item";
+        div.innerHTML = `
+            <div class="msg-head"><span class="msg-name">${m.name}</span> <span>${m.time}</span></div>
+            <div class="msg-body">${m.text}</div>
+        `;
+        el.appendChild(div);
+    });
 }
 
 function render(list) {
@@ -255,7 +330,6 @@ function render(list) {
     var elList = document.getElementById('list');
     elList.innerHTML = "";
 
-    // 1. 數據統計
     if(list.length > 0) {
         lastW = parseFloat(list[0].weight) || 80;
         lastS = parseFloat(list[0].sleep) || 60;
@@ -269,7 +343,6 @@ function render(list) {
             cCal += parseFloat(item.cal||0);
         }
         
-        // 生成列表
         var div = document.createElement('div');
         div.className = "item";
         div.innerHTML = `
@@ -287,28 +360,25 @@ function render(list) {
         elList.appendChild(div);
     });
 
-    // 2. 更新上方數據
+    // 面板數據
     document.getElementById('tDist').innerText = cDist.toFixed(1);
     document.getElementById('tTime').innerText = cTime.toFixed(1);
     document.getElementById('tCal').innerText = cCal;
     document.getElementById('tCount').innerText = cCount;
     
-    // 等級條
+    // 等級與戰鬥力
     var lv = Math.floor(cCount/5)+1;
     document.getElementById('lvDisp').innerText = "Lv." + lv + " 騎士";
     document.getElementById('xpBar').style.width = (cCount%5)*20 + "%";
 
-    // 戰鬥力
     var base = cDist + cTime + cCal;
     var multi = 1 + (cCount + (80-lastW)*10 + (lastS/60) + cCount)/100;
     document.getElementById('cpVal').innerText = Math.floor(base * multi).toLocaleString();
 
-    // 3. 計算近3日平均 (體能狀況)
-    // 篩選有填寫睡眠/體重的資料
+    // 體能狀況 (紅綠燈)
     var sleepList = list.filter(function(x){ return x.sleep && parseFloat(x.sleep)>0; });
     var weightList = list.filter(function(x){ return x.weight && parseFloat(x.weight)>0; });
 
-    // 計算睡眠 (Sleep)
     if(sleepList.length > 0) {
         var sCount = Math.min(sleepList.length, 3);
         var sSum = 0;
@@ -316,20 +386,17 @@ function render(list) {
         var sAvg = (sSum / sCount).toFixed(1);
         var sColor = sAvg >= 70 ? "#39ff14" : (sAvg >= 60 ? "#ffff00" : "#ff3131");
         document.getElementById('avgSleep').innerHTML = `<span style="color:${sColor}">${sAvg}</span>`;
-    } else {
-        document.getElementById('avgSleep').innerText = "--";
-    }
+    } else { document.getElementById('avgSleep').innerText = "--"; }
 
-    // 計算體重 (Weight)
     if(weightList.length > 0) {
         var wCount = Math.min(weightList.length, 3);
         var wSum = 0;
         for(var j=0; j<wCount; j++) wSum += parseFloat(weightList[j].weight);
         var wAvg = (wSum / wCount).toFixed(1);
-        document.getElementById('avgWeight').innerHTML = wAvg + " kg";
-    } else {
-        document.getElementById('avgWeight').innerText = "--";
-    }
+        var currentW = parseFloat(weightList[0].weight);
+        var wColor = currentW < wAvg ? "#39ff14" : (currentW > wAvg ? "#ff3131" : "#fff");
+        document.getElementById('avgWeight').innerHTML = `<span style="color:${wColor}">${wAvg} kg</span>`;
+    } else { document.getElementById('avgWeight').innerText = "--"; }
 }
 </script>
 </body>
