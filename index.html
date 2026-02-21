@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TBA360 v28</title>
+<title>TBA360 v30 Speed</title>
 <style>
 /* 基礎樣式 */
 body { background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
@@ -72,7 +72,8 @@ button:disabled { background: #555; color: #888; }
     
     <div class="grid">
         <div class="card"><div class="val" id="tDist">0</div><div class="lbl">里程 (km)</div></div>
-        <div class="card"><div class="val" id="tTime">0</div><div class="lbl">時數 (min)</div></div> <div class="card"><div class="val" id="tCal">0</div><div class="lbl">卡路里</div></div>
+        <div class="card"><div class="val" id="tTime">0</div><div class="lbl">時數 (min)</div></div>
+        <div class="card"><div class="val" id="tCal">0</div><div class="lbl">卡路里</div></div>
         <div class="card"><div class="val" id="tCount">0</div><div class="lbl">次數</div></div>
     </div>
 
@@ -143,12 +144,12 @@ button:disabled { background: #555; color: #888; }
 <script>
 // ▼ 設定區 ▼
 var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-var KEY = "TBA360_V28";
+var KEY = "TBA360_V30";
 var ADMIN_PASS = "8888"; 
 // ▲ 設定區 ▲
 
-// 全域變數：留言數 (用來計算戰鬥力)
 var globalMsgCount = 0;
+var saveTimeout = null; 
 
 window.onload = function() {
     document.getElementById('i_date').value = new Date().toISOString().slice(0,10);
@@ -175,18 +176,12 @@ function loadCloud() {
     .then(r => r.json())
     .then(d => {
         document.getElementById('loading').style.display = 'none';
-        
-        // 1. 處理留言
         if(d.msgs) {
-            globalMsgCount = d.msgs.length; // 更新全域留言數
+            globalMsgCount = d.msgs.length;
             renderMsgs(d.msgs);
         }
-
-        // 2. 處理日記
         if(d.logs) {
-            // 同步回本機
             localStorage.setItem(KEY, JSON.stringify(d.logs));
-            // 重新渲染 (這時候會用到新的 globalMsgCount 來算戰鬥力)
             render(d.logs);
         }
     })
@@ -201,24 +196,54 @@ function saveData() {
     if(pass !== ADMIN_PASS) { alert("❌ 密碼錯誤"); return; }
 
     var btn = document.getElementById('btnSave');
-    btn.innerText = "處理中...";
+    btn.innerText = "準備中...";
     btn.disabled = true;
+
+    // 安全閥: 20秒超時
+    saveTimeout = setTimeout(function() {
+        alert("⚠️ 處理逾時！可能是圖片太大。");
+        resetUI();
+    }, 20000);
 
     var file = document.getElementById('i_file').files[0];
     if(file) {
-        var fr = new FileReader();
-        fr.onload = function(e) {
-            resizeImg(e.target.result, function(base64) {
-                commitSave(base64);
-            });
-        };
-        fr.readAsDataURL(file);
+        // 使用 URL.createObjectURL 避免記憶體爆掉
+        var imgUrl = URL.createObjectURL(file);
+        btn.innerText = "壓縮圖片中...";
+        
+        resizeImg(imgUrl, function(base64) {
+            // 壓縮完成，釋放記憶體
+            URL.revokeObjectURL(imgUrl);
+            commitSave(base64);
+        });
     } else {
         commitSave("");
     }
 }
 
+function resizeImg(src, cb) {
+    var img = new Image();
+    img.onerror = function() {
+        alert("圖片載入錯誤");
+        cb(""); 
+    };
+    img.onload = function() {
+        var c = document.createElement('canvas');
+        var max = 450; 
+        var w = img.width, h = img.height;
+        if(w>h){ if(w>max){h*=max/w; w=max}} else{ if(h>max){w*=max/h; h=max}}
+        c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        // 壓縮品質 0.5
+        cb(c.toDataURL('image/jpeg', 0.5));
+    };
+    img.src = src;
+}
+
 function commitSave(img64) {
+    var btn = document.getElementById('btnSave');
+    btn.innerText = "上傳雲端中...";
+
     var obj = {
         date: document.getElementById('i_date').value,
         type: document.getElementById('i_type').value,
@@ -245,15 +270,18 @@ function commitSave(img64) {
         })
         .then(r => r.json())
         .then(d => {
+            clearTimeout(saveTimeout);
             alert("✅ 紀錄成功");
             resetUI();
             loadCloud();
         })
         .catch(e => {
+            clearTimeout(saveTimeout);
             alert("⚠️ 存入本機 (雲端失敗)");
             resetUI();
         });
     } else {
+        clearTimeout(saveTimeout);
         alert("✅ 本機已存");
         resetUI();
     }
@@ -283,7 +311,7 @@ function sendMsg() {
         })
         .then(r => r.json())
         .then(d => {
-            alert("✅ 留言成功！戰鬥力 UP！");
+            alert("✅ 留言成功！");
             document.getElementById('m_text').value = "";
             btn.innerText = "📢 發送留言 (+1% CP)";
             btn.disabled = false;
@@ -297,6 +325,7 @@ function sendMsg() {
 }
 
 function resetUI() {
+    clearTimeout(saveTimeout);
     document.getElementById('btnSave').innerText = "送出紀錄";
     document.getElementById('btnSave').disabled = false;
     document.getElementById('i_note').value = "";
@@ -360,7 +389,7 @@ function render(list) {
     });
 
     document.getElementById('tDist').innerText = cDist.toFixed(1);
-    document.getElementById('tTime').innerText = cTime; // 顯示分鐘數
+    document.getElementById('tTime').innerText = cTime; 
     document.getElementById('tCal').innerText = cCal;
     document.getElementById('tCount').innerText = cCount;
     
@@ -368,15 +397,10 @@ function render(list) {
     document.getElementById('lvDisp').innerText = "Lv." + lv + " 騎士";
     document.getElementById('xpBar').style.width = (cCount%5)*20 + "%";
 
-    // ★★★ 戰鬥力公式更新 ★★★
-    // 基礎值：因為時間改成 min，數值變大，基礎 CP 會上升很多
     var base = cDist + cTime + cCal; 
-    // 倍率：加入 globalMsgCount (留言數)
     var multi = 1 + (cCount + (80-lastW)*10 + (lastS/60) + cCount + globalMsgCount)/100;
-    
     document.getElementById('cpVal').innerText = Math.floor(base * multi).toLocaleString();
 
-    // 體能狀況
     var sleepList = list.filter(function(x){ return x.sleep && parseFloat(x.sleep)>0; });
     var weightList = list.filter(function(x){ return x.weight && parseFloat(x.weight)>0; });
 
