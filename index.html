@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TBA360 v31 Auto-Clean</title>
+<title>TBA360 v32 Smart HD</title>
 <style>
 /* 基礎樣式 */
 body { background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
@@ -20,6 +20,11 @@ body { background: #000; color: #fff; font-family: -apple-system, system-ui, san
     position: absolute; bottom: 10px; right: 10px;
     font-size: 1.5rem; font-weight: bold; font-style: italic; color: #fff; text-shadow: 0 0 10px #00f2ff;
     background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 5px; border: 1px solid #00f2ff;
+}
+/* 新增：版本號標籤 */
+.version-tag {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 0.75rem; color: rgba(255,255,255,0.4); font-family: monospace; letter-spacing: 1px;
 }
 
 /* 容器 */
@@ -63,6 +68,7 @@ button:disabled { background: #555; color: #888; }
 <body>
 
 <div class="banner">
+    <div class="version-tag">v32.0 (Smart HD)</div>
     <div class="banner-text">TBA360 戰情室</div>
 </div>
 
@@ -144,7 +150,7 @@ button:disabled { background: #555; color: #888; }
 <script>
 // ▼ 設定區 ▼
 var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-var KEY = "TBA360_V31";
+var KEY = "TBA360_V32";
 var ADMIN_PASS = "8888"; 
 // ▲ 設定區 ▲
 
@@ -183,12 +189,9 @@ function loadCloud() {
             renderMsgs(d.msgs);
         }
         if(d.logs) {
-            // ★ 自我修復：只把最新 10 筆存入手機，釋放空間
             try {
                 localStorage.setItem(KEY, JSON.stringify(d.logs.slice(0, 10)));
             } catch(e) { console.warn("LocalStorage 仍滿", e); }
-            
-            // 畫面還是渲染全部的資料
             render(d.logs);
         }
     })
@@ -214,7 +217,7 @@ function saveData() {
     var file = document.getElementById('i_file').files[0];
     if(file) {
         var imgUrl = URL.createObjectURL(file);
-        btn.innerText = "壓縮圖片中...";
+        btn.innerText = "最佳化壓縮中...";
         
         resizeImg(imgUrl, function(base64) {
             URL.revokeObjectURL(imgUrl);
@@ -233,14 +236,26 @@ function resizeImg(src, cb) {
     };
     img.onload = function() {
         var c = document.createElement('canvas');
-        // ★ 極限壓縮：尺寸縮至 400，確保不會超過 Google Sheet 單格限制
-        var max = 400; 
+        // ★ 解析度提升至 600px，畫質大幅改善
+        var max = 600; 
         var w = img.width, h = img.height;
         if(w>h){ if(w>max){h*=max/w; w=max}} else{ if(h>max){w*=max/h; h=max}}
         c.width=w; c.height=h;
-        c.getContext('2d').drawImage(img,0,0,w,h);
-        // ★ 品質降至 0.4
-        cb(c.toDataURL('image/jpeg', 0.4));
+        var ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        
+        // ★ 智慧動態壓縮：測試最佳畫質，確保不超過 Google Sheet 的 5萬字元限制 (安全抓 45000)
+        var quality = 0.8; // 從 80% 高畫質開始試
+        var base64 = c.toDataURL('image/jpeg', quality);
+        
+        // 如果太大，就逐漸降低畫質，直到塞得下為止
+        while (base64.length > 45000 && quality > 0.1) {
+            quality -= 0.1;
+            base64 = c.toDataURL('image/jpeg', parseFloat(quality.toFixed(1)));
+        }
+        
+        console.log("壓縮完畢, 品質:", quality.toFixed(1), "大小:", base64.length);
+        cb(base64);
     };
     img.src = src;
 }
@@ -262,16 +277,13 @@ function commitSave(img64) {
         img: img64
     };
 
-    // ★ 存入本機時，強制瘦身，超過 10 筆就砍掉，避免塞爆 LocalStorage
     try {
         var list = JSON.parse(localStorage.getItem(KEY) || "[]");
         list.unshift(obj);
         if(list.length > 10) list = list.slice(0, 10);
         localStorage.setItem(KEY, JSON.stringify(list));
         render(list);
-    } catch(e) {
-        console.warn("無法存入本機，可能空間仍不足", e);
-    }
+    } catch(e) { console.warn("無法存入本機", e); }
 
     if(GAS_URL) {
         fetch(GAS_URL, {
