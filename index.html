@@ -199,7 +199,13 @@ button:disabled { background: #3a3a3a; color: #888; }
     margin-top: 10px; height: 140px; border: 1px dashed var(--hud-dim); display: flex; align-items: center; justify-content: center;
     font-family: var(--mono); color: var(--hud); font-size: .9rem; letter-spacing: 1px; animation: blink 1.4s infinite;
 }
-.ai-fail { animation: none; color: var(--danger); border-color: var(--danger); }
+.ai-fail { animation: none; color: var(--danger); border-color: var(--danger); height: auto; min-height: 70px; padding: 12px; flex-direction: column; gap: 6px; text-align: center; }
+.ai-fail small { color: #c98; font-size: .72rem; word-break: break-all; }
+.item-head { flex-wrap: wrap; }
+.src-old { color: var(--muted); border-color: var(--muted); }
+.item-feel { color: var(--energy); margin-top: 6px; font-size: .95rem; line-height: 1.5; }
+.feel-box { margin-top: 10px; padding: 10px; border: 1px dashed var(--energy); background: rgba(255,157,0,.05); }
+.feel-input { min-height: 90px; margin-top: 0; }
 .item-btns { display: flex; gap: 8px; margin-top: 10px; }
 .item-btns button { margin-top: 0; padding: 10px; font-size: .9rem; }
 
@@ -224,7 +230,7 @@ button:disabled { background: #3a3a3a; color: #888; }
 <body>
 
 <div class="banner">
-    <div class="version-tag">v34.0 // POWER SCAN</div>
+    <div class="version-tag">v37.0 // POWER SCAN</div>
     <div class="banner-text">TBA360 戰情室</div>
 </div>
 
@@ -263,7 +269,8 @@ button:disabled { background: #3a3a3a; color: #888; }
     <div class="xp-bg"><div class="xp-fill" id="xpBar"></div></div>
     <div class="goal-row"><span>目標 1,000,000</span><b id="goalInfo">--</b></div>
     <div class="goal-bg"><div class="goal-fill" id="goalBar"></div></div>
-    <div class="tap-hint">[ 點擊探測器重新測量 ]</div>
+    <div class="tap-hint" id="formulaInfo"></div>
+    <div class="tap-hint" style="margin-top:4px">[ 點擊探測器重新測量 ]</div>
 </div>
 
 <div class="box">
@@ -292,11 +299,11 @@ button:disabled { background: #3a3a3a; color: #888; }
         <input type="file" id="i_file" accept="image/*" style="margin-top:5px">
     </div>
     <textarea id="i_note" placeholder="心得..."></textarea>
-    <label class="check-row"><input type="checkbox" id="i_ai" checked> 🎨 AI 自動生成戰績圖</label>
+    <label class="check-row"><input type="checkbox" id="i_ai"> 🎨 用心得當感言，送出後直接生圖</label>
     <input type="password" id="i_pass" class="pass-input" placeholder="請輸入密碼">
     <button id="btnSave">送出紀錄</button>
     <button id="btnSync" class="btn-ghost">🔄 立即同步 Garmin / Strava</button>
-    <div class="hint">Garmin 的運動每小時會自動匯入並生圖，不用手動輸入。<br>睡眠、體重、沒戴錶的運動再用上面的表單補。</div>
+    <div class="hint">Garmin 的運動每天 23 點自動匯入，車錶和手錶重複記錄的只留一筆。<br>想要 AI 圖的紀錄，在下方按「🎨 感言生圖」寫下感言，就會照內容生成。<br>睡眠、體重、沒戴錶的運動再用上面的表單補。</div>
 </div>
 
 <div class="box">
@@ -330,23 +337,28 @@ button:disabled { background: #3a3a3a; color: #888; }
 <script>
 // ▼ 設定區 ▼（密碼在後端的指令碼屬性 ADMIN_PASS）
 var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-var KEY = "TBA360_V35";
+var KEY = "TBA360_V37";
 var GOAL_DATE = new Date(2026, 10, 13);
 
-// ── 戰鬥力公式（只用 Strava 拿得到的資料）──
+// ── 戰鬥力公式（只用 Strava 會自動帶進來的欄位：卡路里、爬升、距離、時間、類型）──
+// 從 START_DATE 起算，起始戰鬥力 START_CP
 // 修行值 = 卡路里 + 爬升公尺（沒有卡路里時用 分鐘×8 估算）
-// 每累積 1,000 修行值，戰鬥力 ×GROWTH
-// 單次「極限突破」（騎車 ≥100km、跑步 ≥21km、或任何運動 ≥180 分鐘）再 ×BREAK_MULTI
-var GROWTH = 1.35;
-var BREAK_MULTI = 2;
-var ANCHOR_TIME = '2026-10-31 17:30';   // 校準點：這個時間點的戰鬥力 = ANCHOR_CP
-var ANCHOR_CP = 14444;
+//        + 極限突破獎勵 BREAK_XP（騎車 ≥100km、跑步 ≥21km、或任何運動 ≥180 分鐘）
+// 戰鬥力 = START_CP × GROWTH ^ (累積修行值 / 1000)
+// GROWTH 設 null 時自動校準：用 CALIB_TIME 之前的紀錄，算出讓「之後照 PLAN_XP 的訓練量」剛好達到 GOAL_CP 的係數
+var START_DATE = '2026-03-01';
+var START_CP = 5;
+var BREAK_XP = 5000;
 var GOAL_CP = 1000000;
+var CALIB_TIME = '2026-10-31 23:59';
+// 10 天訓練計畫：2 次百公里（各 2,800 大卡 + 600m 爬升 + 突破獎勵）+ 6 次一般訓練（各 500 大卡）
+var PLAN_XP = 2 * (2800 + 600 + BREAK_XP) + 6 * 500;
+var GROWTH = null;   // 想固定係數就填數字，例如 1.13
 
 // 總戰鬥力的等級門檻與稱號
-var TOTAL_TIERS = [[30000, '鍛鍊中'], [100000, '強者'], [300000, '猛者'], [1000000, '超越極限'], [Infinity, '⚠ 規格外']];
-// 單次運動的倍率等級（戰績卡）
-var ACT_TIERS = [[1.1, '熱身'], [1.3, '認真'], [1.8, '全力'], [3, '爆發'], [Infinity, '極限突破']];
+var TOTAL_TIERS = [[1000, '一般市民'], [30000, '鍛鍊中'], [150000, '強者'], [1000000, '超越極限'], [Infinity, '⚠ 規格外']];
+// 單次運動的修行值等級（戰績卡）
+var ACT_TIERS = [[300, '熱身'], [600, '認真'], [1200, '全力'], [2500, '爆發'], [Infinity, '極限突破']];
 var TIER_COLORS = ['#9fe8ff', '#3dff8b', '#ffe14d', '#ff9d00', '#ff3b3b'];
 // ▲ 設定區 ▲
 
@@ -393,35 +405,41 @@ function isPending(item) { return item.aiStatus === 'pending' || /^retry/.test(i
 function tierIndex(v, tiers) { for (var i = 0; i < tiers.length; i++) if (v < tiers[i][0]) return i; return tiers.length - 1; }
 
 /* ---------- 戰鬥力公式 ---------- */
-function xpOf(item) {
-    if (item.type === '🛌 休息') return 0;
-    var cal = num(item.cal) || num(item.time) * 8;
-    return cal + num(item.elev);
-}
 function isBreak(item) {
     var t = item.type || '', d = num(item.dist), m = num(item.time);
     return (/騎行/.test(t) && d >= 100) || (/跑步/.test(t) && d >= 21) || (item.type !== '🛌 休息' && m >= 180);
 }
-function actMulti(item) { return Math.pow(GROWTH, xpOf(item) / 1000) * (isBreak(item) ? BREAK_MULTI : 1); }
+function xpOf(item) {
+    if (item.type === '🛌 休息' || (item.date || '') < START_DATE) return 0;
+    var cal = num(item.cal) || num(item.time) * 8;
+    return cal + num(item.elev) + (isBreak(item) ? BREAK_XP : 0);
+}
 function tkey(item) { return (item.date || '') + ' ' + (item.start || '00:00'); }
 
-// 依時間順序累乘，算出每筆運動前後的戰鬥力；以 ANCHOR_TIME = ANCHOR_CP 校準
+var curG = 1;
+// 依時間順序累加修行值，算出每筆運動前後的戰鬥力
 function computeCP(list) {
     var sorted = list.slice().sort(function (a, b) { return tkey(a) < tkey(b) ? -1 : tkey(a) > tkey(b) ? 1 : 0; });
-    var logBefore = 0;
-    sorted.forEach(function (it) { if (tkey(it) <= ANCHOR_TIME) logBefore += Math.log(actMulti(it)); });
-    var base = ANCHOR_CP / Math.exp(logBefore), acc = 0;
+    var histXP = 0;
+    sorted.forEach(function (it) { if (tkey(it) <= CALIB_TIME) histXP += xpOf(it); });
+    // 自動校準：START_CP × G^((歷史 + 計畫) / 1000) = GOAL_CP
+    curG = GROWTH || Math.exp(Math.log(GOAL_CP / START_CP) / ((histXP + PLAN_XP) / 1000));
+    var lnG = Math.log(curG), acc = 0;
     sorted.forEach(function (it) {
-        var before = base * Math.exp(acc);
-        it._multi = actMulti(it);
-        it._break = isBreak(it);
-        acc += Math.log(it._multi);
-        it._cp = Math.floor(base * Math.exp(acc));
+        var xp = xpOf(it);
+        it._xp = xp;
+        it._break = xp > 0 && isBreak(it);
+        if (!xp) { it._multi = 1; it._gain = 0; it._cp = beforeStart(it) ? null : Math.floor(START_CP * Math.exp(acc)); return; }
+        var before = START_CP * Math.exp(acc);
+        acc += lnG * xp / 1000;
+        it._multi = Math.exp(lnG * xp / 1000);
+        it._cp = Math.floor(START_CP * Math.exp(acc));
         it._gain = Math.floor(it._cp - before);
     });
-    return Math.floor(base * Math.exp(acc));
+    return Math.floor(START_CP * Math.exp(acc));
 }
-function actTier(item) { return item._break ? 4 : tierIndex(item._multi || 1, ACT_TIERS); }
+function beforeStart(it) { return (it.date || '') < START_DATE; }
+function actTier(item) { return item._break ? 4 : tierIndex(item._xp || 0, ACT_TIERS); }
 
 // 依可用寬度自動縮放大數字
 function setCPText(text) {
@@ -610,13 +628,15 @@ function syncNow() {
     if (!pass) return;
     var btn = $('btnSync');
     btn.disabled = true;
-    btn.innerText = "同步中（含 AI 繪圖，最多約 2 分鐘）...";
+    btn.innerText = "同步中...";
     withTimeout(post({ action: 'sync', pass: pass }), 300000)
         .then(function (d) {
             var m = [];
             if (d.err) m.push("⚠️ " + d.err);
             if (d.note) m.push("ℹ️ " + d.note);
-            if (d.added != null) m.push("✅ 新增 " + d.added + " 筆運動，完成 " + (d.ai || 0) + " 張 AI 圖");
+            if (d.added != null) m.push("✅ 新增 " + d.added + " 筆運動" + (d.dup ? "，隱藏重複 " + d.dup + " 筆" : "") +
+                (d.merged ? "，合併舊紀錄 " + d.merged + " 筆" : ""));
+            if (d.remaining) m.push("⏳ 還有 " + d.remaining + " 筆舊活動沒抓完，等 15 分鐘再按一次（或讓排程自己補）");
             alert(m.join("\n"));
             loadCloud();
         })
@@ -627,24 +647,45 @@ function syncNow() {
 function onListClick(e) {
     var b = e.target.closest('button[data-act]');
     if (!b) return;
-    var item = LOGS[+b.dataset.i];
+    var i = +b.dataset.i, item = LOGS[i];
     if (!item) return;
-    if (b.dataset.act === 'card') openCard(item, b);
-    if (b.dataset.act === 'regen') regen(item, b);
+    var act = b.dataset.act;
+    if (act === 'card') openCard(item, b);
+    if (act === 'feel') toggleFeel(i, true);
+    if (act === 'feel-cancel') toggleFeel(i, false);
+    if (act === 'feel-go') genWithFeel(item, i, b);
 }
 
-function regen(item, btn) {
-    var pass = getPass();
-    if (!pass) return;
+// 感言輸入框（密碼只記在這次開啟的頁面裡，不存檔）
+var sessionPass = '';
+function toggleFeel(i, open) {
+    var box = $('feel-' + i);
+    if (!box) return;
+    box.style.display = open ? 'block' : 'none';
+    if (open) {
+        var p = box.querySelector('.feel-pass');
+        if (!p.value) p.value = sessionPass || $('i_pass').value;
+        box.querySelector('textarea').focus();
+    }
+}
+
+function genWithFeel(item, i, btn) {
+    var box = $('feel-' + i);
+    var feel = box.querySelector('textarea').value.trim();
+    var pass = box.querySelector('.feel-pass').value;
+    if (!pass) { alert("請輸入密碼"); box.querySelector('.feel-pass').focus(); return; }
+    if (!feel && !confirm("沒有寫感言，要用預設情境生圖嗎？")) return;
     btn.disabled = true;
-    btn.innerText = "🎨 繪製中...";
-    withTimeout(post({ action: 'regen', pass: pass, id: item.id }), 150000)
+    btn.innerText = "🎨 繪製中，約 20–40 秒...";
+    withTimeout(post({ action: 'gen', pass: pass, id: item.id, feel: feel }), 150000)
         .then(function (d) {
-            if (!d.ok) alert("❌ " + (d.err || "生圖失敗"));
+            if (d.err === '密碼錯誤') { alert("❌ 密碼錯誤"); return; }
+            sessionPass = pass;
+            if (!d.ok) alert("❌ 生圖失敗：" + (d.err || ''));
             loadCloud();
         })
         .catch(function (e) { alert("⚠️ " + e.message); })
-        .then(function () { btn.disabled = false; btn.innerText = "🎨 重新生圖"; });
+        .then(function () { btn.disabled = false; btn.innerText = "✨ 依感言生圖"; });
 }
 
 /* ---------- 留言 ---------- */
@@ -697,27 +738,39 @@ function itemHtml(item, i) {
     var ai = '';
     if (item.aiImg) ai = imgTag(item.aiImg, 'AI 戰績圖');
     else if (isPending(item)) ai = '<div class="ai-wait">// 能量集中中… AI 繪製中</div>';
-    else if (item.aiStatus === 'fail') ai = '<div class="ai-wait ai-fail">AI 生圖失敗，可按「重新生圖」</div>';
+    else if (item.aiStatus === 'fail') ai = '<div class="ai-wait ai-fail">AI 生圖失敗' +
+        (item.aiErr ? '<small>' + esc(item.aiErr.slice(0, 90)) + '</small>' : '') + '</div>';
 
-    var src = item.source === 'strava' ? '<span class="src">⌚ GARMIN</span>' : '';
+    var dev = String(item.device || '');
+    var devIcon = /edge|bryton|wahoo|igpsport|elemnt|karoo|xoss/i.test(dev) ? '🚲' : '⌚';
+    var src = item.source === 'strava' ? '<span class="src">' + devIcon + ' ' + esc(dev.replace(/^garmin\s*/i, '') || 'GARMIN') + '</span>'
+            : item.source === 'legacy' ? '<span class="src src-old">舊紀錄</span>' : '';
+
+    var feelBox = item.id ? '<div class="feel-box" id="feel-' + i + '" style="display:none">' +
+        '<textarea class="feel-input" maxlength="300" placeholder="寫下這趟的感言，AI 會照內容畫。例：逆風騎到淡水，夕陽超美但大腿快廢了">' + esc(item.feel || '') + '</textarea>' +
+        '<input type="password" class="pass-input feel-pass" placeholder="密碼">' +
+        '<div class="item-btns"><button data-act="feel-go" data-i="' + i + '">✨ 依感言生圖</button>' +
+        '<button class="btn-dim" data-act="feel-cancel" data-i="' + i + '">取消</button></div></div>' : '';
 
     return '<div class="item">' +
         '<div class="item-head"><span class="item-date">' + esc(item.date) + (item.start ? ' <small>' + esc(item.start) + '</small>' : '') + '</span>' +
         '<span><span class="tag">' + esc(item.type) + '</span>' + src + '</span></div>' +
         (info.length ? '<div class="item-info">' + info.join(' | ') + '</div>' : '') +
         (stats || gain ? '<div><span class="item-stats">' + stats + '</span>' + (gain ? '<span class="item-gain">+' + gain.toLocaleString() + ' CP' + multi + '</span>' : '') +
-            (item._break ? '<span class="item-break">⚡極限突破</span>' : '') + '</div>' : '') +
+            (item._break ? '<span class="item-break">⚡極限突破</span>' : '') + + '</div>' : '') +
         (item.note ? '<div class="item-note">' + esc(item.note) + '</div>' : '') +
+        (item.feel ? '<div class="item-feel">💬 ' + esc(item.feel) + '</div>' : '') +
         ai +
         (item.img ? imgTag(item.img, '照片') : '') +
         '<div class="item-btns">' +
             '<button data-act="card" data-i="' + i + '">📥 戰績卡</button>' +
-            (item.id ? '<button class="btn-dim" data-act="regen" data-i="' + i + '">🎨 重新生圖</button>' : '') +
-        '</div></div>';
+            (item.id ? '<button class="btn-dim" data-act="feel" data-i="' + i + '">🎨 ' + (item.aiImg ? '重新生圖' : '感言生圖') + '</button>' : '') +
+        '</div>' + feelBox + '</div>';
 }
 
 function render(list) {
-    LOGS = list || [];
+    // 只顯示一日北高挑戰起算日（START_DATE）之後的紀錄
+    LOGS = (list || []).filter(function (x) { return (x.date || '') >= START_DATE; });
     var cDist = 0, cTime = 0, cCal = 0, cCount = 0, anyPending = false;
 
     curCP = computeCP(LOGS);
@@ -735,9 +788,12 @@ function render(list) {
     curLv = Math.floor(cCount / 5) + 1;
 
     // 目標進度（對數尺度：每乘一次倍率前進一樣多）
-    var prog = Math.max(0, Math.min(1, Math.log(curCP / ANCHOR_CP) / Math.log(GOAL_CP / ANCHOR_CP)));
+    var prog = Math.max(0, Math.min(1, Math.log(curCP / START_CP) / Math.log(GOAL_CP / START_CP)));
     $('goalBar').style.width = (prog * 100).toFixed(1) + '%';
+    var needXP = Math.max(0, Math.log(GOAL_CP / curCP) / Math.log(curG) * 1000);
     $('goalInfo').innerText = curCP >= GOAL_CP ? '🎯 目標達成！' : '還差 ×' + (GOAL_CP / curCP).toFixed(1);
+    $('formulaInfo').innerText = '自 ' + START_DATE.slice(5).replace('-', '/') + ' 起算 · 每千修行值 ×' + curG.toFixed(3) +
+        (curCP < GOAL_CP ? ' · 距目標還需修行值 ' + Math.round(needXP).toLocaleString() : '');
 
     $('list').innerHTML = LOGS.map(itemHtml).join('') || '<div style="color:var(--muted);text-align:center">還沒有紀錄</div>';
 
@@ -773,7 +829,16 @@ function render(list) {
 
     // 還有圖在排隊時，每 2 分鐘自動刷新一次
     clearTimeout(pollTimer);
-    if (anyPending) pollTimer = setTimeout(function () { if (!document.hidden) loadCloud(); else render(LOGS); }, 120000);
+    if (anyPending) schedulePoll();
+}
+
+// 有圖在繪製時，每 2 分鐘刷新；正在輸入感言時先不刷新，免得打到一半的字被清掉
+function schedulePoll() {
+    clearTimeout(pollTimer);
+    pollTimer = setTimeout(function () {
+        var typing = document.activeElement && $('list').contains(document.activeElement);
+        if (!document.hidden && !typing) loadCloud(); else schedulePoll();
+    }, 120000);
 }
 
 /* ---------- 戰績卡（AI 圖 + 探測器數據） ---------- */
@@ -900,9 +965,10 @@ function drawCard(item, bg) {
     var y = 860;
     x.fillStyle = '#fff'; x.font = '800 46px ' + F;
     x.fillText(item.type || '', 50, y);
-    if (item.note) {
-        x.fillStyle = '#cfe9d8'; x.font = '400 30px ' + F;
-        x.fillText(clip(item.note, W - 100), 50, y + 48);
+    var line = item.feel ? '「' + item.feel + '」' : item.note;
+    if (line) {
+        x.fillStyle = item.feel ? '#ffc56b' : '#cfe9d8'; x.font = '400 30px ' + F;
+        x.fillText(clip(line, W - 100), 50, y + 48);
     }
 
     // 戰鬥力讀數
@@ -912,7 +978,7 @@ function drawCard(item, bg) {
     x.fillText('【' + ACT_TIERS[ti][1] + '】', W - 50, y + 112);
     x.textAlign = 'left';
     // 大字：這次運動後的總戰鬥力（自動縮到放得下）
-    var cpText = (item._cp || 0).toLocaleString();
+    var cpText = item._cp == null ? '—' : item._cp.toLocaleString();
     var fs = 120;
     x.font = '900 ' + fs + 'px ' + D;
     while (fs > 60 && x.measureText(cpText).width > W - 100) { fs -= 4; x.font = '900 ' + fs + 'px ' + D; }
