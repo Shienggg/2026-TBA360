@@ -3,84 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TBA360 v32 Smart HD</title>
+<title>TBA360 戰鬥力探測</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-/* 基礎樣式 */
-body { background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; margin: 0; padding-bottom: 50px; display: flex; flex-direction: column; align-items: center; }
+:root {
+    --hud: #3dff8b;
+    --hud-dim: rgba(61,255,139,.45);
+    --hud-faint: rgba(61,255,139,.14);
+    --energy: #ff9d00;
+    --danger: #ff3b3b;
+    --bg: #030705;
+    --panel: rgba(5,16,10,.9);
+    --text: #e6fff0;
+    --muted: #7fa38c;
+    --aura: #9fe8ff;
+    --mono: 'Share Tech Mono', ui-monospace, Menlo, monospace;
+    --digit: 'Orbitron', 'Share Tech Mono', ui-monospace, monospace;
+}
 
-/* Banner */
-.banner { 
-    width: 100%; height: 300px; 
-    background-color: #000; 
-    background-image: url('https://i.meee.com.tw/0neg3F9.png'); 
-    background-size: contain; background-repeat: no-repeat; background-position: center; 
-    border-bottom: 4px solid #00f2ff; margin-bottom: 20px; position: relative;
+/* ---------- 基礎 ---------- */
+body {
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(ellipse at 50% 0%, rgba(61,255,139,.10), transparent 60%),
+        linear-gradient(var(--hud-faint) 1px, transparent 1px),
+        linear-gradient(90deg, var(--hud-faint) 1px, transparent 1px);
+    background-size: 100% 100%, 36px 36px, 36px 36px;
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: -apple-system, system-ui, "PingFang TC", "Noto Sans TC", sans-serif;
+    margin: 0; padding-bottom: 50px;
+    display: flex; flex-direction: column; align-items: center;
+}
+/* 全畫面掃描線 */
+body::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 50;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px);
+}
+
+/* ---------- Banner ---------- */
+.banner {
+    width: 100%; height: 300px;
+    background-color: #000;
+    background-image: url('https://i.meee.com.tw/0neg3F9.png');
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+    border-bottom: 2px solid var(--hud); box-shadow: 0 2px 24px rgba(61,255,139,.35);
+    margin-bottom: 20px; position: relative;
 }
 .banner-text {
-    position: absolute; bottom: 10px; right: 10px;
-    font-size: 1.5rem; font-weight: bold; font-style: italic; color: #fff; text-shadow: 0 0 10px #00f2ff;
-    background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 5px; border: 1px solid #00f2ff;
+    position: absolute; bottom: 12px; right: 12px;
+    font-family: var(--mono); font-size: 1.3rem; letter-spacing: 3px; color: var(--hud);
+    text-shadow: 0 0 10px var(--hud);
+    background: rgba(0,0,0,.7); padding: 6px 14px; border: 1px solid var(--hud);
 }
-/* 新增：版本號標籤 */
-.version-tag {
-    position: absolute; top: 10px; right: 10px;
-    font-size: 0.75rem; color: rgba(255,255,255,0.4); font-family: monospace; letter-spacing: 1px;
+.version-tag { position: absolute; top: 10px; right: 10px; font-family: var(--mono); font-size: .75rem; color: var(--hud-dim); letter-spacing: 1px; }
+
+/* ---------- 面板（四角瞄準框） ---------- */
+.box {
+    position: relative; border: 1px solid var(--hud-faint); padding: 20px; margin-bottom: 20px;
+    width: 90%; max-width: 500px; background: var(--panel); box-sizing: border-box;
+}
+.box::before, .box::after {
+    content: ''; position: absolute; width: 18px; height: 18px; border: 2px solid var(--hud); pointer-events: none;
+}
+.box::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.box::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+.box h3 {
+    margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--hud-dim);
+    font-family: var(--mono); font-weight: normal; letter-spacing: 2px; color: var(--hud);
+}
+.box h3 small { color: var(--muted); font-size: .75rem; margin-left: 6px; }
+
+/* ---------- 戰鬥力探測器 ---------- */
+.scanner { cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+.scanner.t1 { --aura: #9fe8ff; }
+.scanner.t2 { --aura: #3dff8b; }
+.scanner.t3 { --aura: #ffe14d; }
+.scanner.t4 { --aura: #ff9d00; }
+.scanner.t5 { --aura: #ff3b3b; }
+
+.scan-head { display: flex; justify-content: space-between; font-family: var(--mono); font-size: .85rem; color: var(--hud); letter-spacing: 2px; }
+#scanState { color: var(--aura); }
+.scanning #scanState { color: var(--hud); animation: blink .3s steps(2) infinite; }
+
+.reticle {
+    position: relative; margin: 14px 0 6px; padding: 22px 10px 16px; text-align: center;
+    --c: var(--aura);
+    background:
+        linear-gradient(var(--c),var(--c)) top left / 24px 2px no-repeat,
+        linear-gradient(var(--c),var(--c)) top left / 2px 24px no-repeat,
+        linear-gradient(var(--c),var(--c)) top right / 24px 2px no-repeat,
+        linear-gradient(var(--c),var(--c)) top right / 2px 24px no-repeat,
+        linear-gradient(var(--c),var(--c)) bottom left / 24px 2px no-repeat,
+        linear-gradient(var(--c),var(--c)) bottom left / 2px 24px no-repeat,
+        linear-gradient(var(--c),var(--c)) bottom right / 24px 2px no-repeat,
+        linear-gradient(var(--c),var(--c)) bottom right / 2px 24px no-repeat;
+}
+.aura {
+    position: absolute; left: 50%; top: 55%; width: 85%; height: 140%;
+    transform: translate(-50%,-50%); pointer-events: none;
+    background: radial-gradient(ellipse at 50% 70%, var(--aura) 0%, transparent 65%);
+    filter: blur(18px); opacity: .25; animation: flicker 1.1s ease-in-out infinite alternate;
+}
+.cp-label { position: relative; font-family: var(--mono); font-size: .8rem; letter-spacing: 4px; color: var(--muted); }
+.cp-val {
+    position: relative; font-family: var(--digit); font-weight: 900;
+    font-size: clamp(2.6rem, 13vw, 3.8rem); line-height: 1.15; color: var(--aura);
+    text-shadow: 0 0 10px var(--aura), 0 0 28px var(--aura); font-variant-numeric: tabular-nums;
+}
+.cp-tier { position: relative; font-family: var(--mono); letter-spacing: 3px; color: var(--aura); font-size: .95rem; }
+.scanning .cp-val { color: var(--hud); text-shadow: 0 0 8px var(--hud); animation: jitter .09s infinite; }
+.locked .cp-val { animation: lockflash .6s ease-out; }
+.t5:not(.scanning) .cp-val { animation: glitch 2.4s infinite; }
+
+.scan-bar {
+    position: absolute; left: 0; right: 0; top: 0; height: 3px; pointer-events: none; opacity: 0;
+    background: linear-gradient(90deg, transparent, var(--hud), transparent); box-shadow: 0 0 14px var(--hud);
+}
+.scanning .scan-bar { opacity: 1; animation: sweep .7s linear infinite; }
+.tap-hint { text-align: center; font-family: var(--mono); font-size: .72rem; color: var(--muted); margin-top: 12px; letter-spacing: 1px; }
+
+@keyframes flicker {
+    0% { opacity: .16; transform: translate(-50%,-50%) scale(1,1); }
+    50% { opacity: .34; transform: translate(-50%,-53%) scale(1.06,1.14); }
+    100% { opacity: .22; transform: translate(-50%,-50%) scale(.97,1.03); }
+}
+@keyframes sweep { from { top: 0; } to { top: 100%; } }
+@keyframes jitter { 50% { transform: translateX(1px); } }
+@keyframes blink { 50% { opacity: .2; } }
+@keyframes lockflash { 0% { filter: brightness(2.2); transform: scale(1.08); } 100% { filter: none; transform: none; } }
+@keyframes glitch {
+    0%, 88%, 100% { transform: none; clip-path: none; }
+    90% { transform: translate(-3px,1px); clip-path: inset(0 0 55% 0); }
+    92% { transform: translate(3px,-1px); clip-path: inset(45% 0 0 0); }
+    94% { transform: translate(-1px,0); clip-path: none; }
 }
 
-/* 容器 */
-.box { border: 1px solid #333; padding: 20px; margin-bottom: 20px; width: 90%; max-width: 500px; background: #111; border-radius: 12px; box-sizing: border-box; }
-
-/* 戰鬥力與面板 */
-.cp-val { font-size: 3.5rem; color: #ff3131; font-weight: 900; text-align: center; font-family: monospace; text-shadow: 0 0 15px #f00; margin: 5px 0; }
+/* ---------- 數據 ---------- */
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; text-align: center; }
-.card { background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
-.val { font-size: 1.2rem; color: #39ff14; font-weight: bold; }
-.lbl { font-size: 0.8rem; color: #888; margin-top: 2px; }
-.status-row { margin-top: 20px; padding-top: 15px; border-top: 1px dashed #333; display: flex; justify-content: space-around; }
-.status-val { font-size: 1.5rem; font-weight: bold; color: #fff; }
-.status-lbl { font-size: 0.8rem; color: #aaa; margin-top: 2px; }
-.lv-row { display: flex; justify-content: space-between; margin-top: 15px; color: #00f2ff; font-weight: bold; }
-.days { color: #39ff14; }
-.xp-bg { width: 100%; height: 8px; background: #333; margin-top: 5px; border-radius: 4px; overflow: hidden; }
-.xp-fill { height: 100%; background: #00f2ff; width: 0%; transition: width 0.5s; }
+.card { background: rgba(0,0,0,.45); padding: 10px; border: 1px solid var(--hud-faint); }
+.val { font-family: var(--digit); font-weight: 700; font-size: 1.15rem; color: var(--hud); }
+.lbl { font-family: var(--mono); font-size: .78rem; color: var(--muted); margin-top: 3px; }
+.status-row { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--hud-faint); display: flex; justify-content: space-around; }
+.status-val { font-family: var(--digit); font-size: 1.35rem; font-weight: 700; color: #fff; }
+.status-lbl { font-family: var(--mono); font-size: .78rem; color: var(--muted); margin-top: 3px; }
+.lv-row { display: flex; justify-content: space-between; margin-top: 16px; font-family: var(--mono); color: var(--hud); letter-spacing: 1px; }
+.days { color: var(--energy); }
+.xp-bg { width: 100%; height: 6px; background: rgba(61,255,139,.12); margin-top: 6px; overflow: hidden; }
+.xp-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--hud), var(--energy)); box-shadow: 0 0 10px var(--hud); transition: width .6s; }
 
-/* 表單 */
-input, select, textarea { width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 12px; margin-top: 10px; border-radius: 6px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
-button { width: 100%; margin-top: 15px; padding: 15px; background: #fff; color: #000; border: none; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
-button:disabled { background: #555; color: #888; }
-.pass-input { border: 1px solid #ff3131; background: #220000; color: #ffaaaa; letter-spacing: 5px; text-align: center; font-weight: bold; }
+/* ---------- 表單 ---------- */
+input, select, textarea {
+    width: 100%; background: rgba(0,0,0,.55); border: 1px solid var(--hud-dim); color: var(--text);
+    padding: 12px; margin-top: 10px; border-radius: 0; box-sizing: border-box; font-size: 16px; -webkit-appearance: none;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--hud); box-shadow: 0 0 10px rgba(61,255,139,.35); }
+input::placeholder, textarea::placeholder { color: #4d6b58; }
+input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1) sepia(1) hue-rotate(80deg); }
+button {
+    width: 100%; margin-top: 15px; padding: 15px; border: none; cursor: pointer;
+    background: var(--energy); color: #120800; font-weight: 800; font-size: 1.05rem; letter-spacing: 1px;
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+}
+button:active { filter: brightness(1.25); }
+button:disabled { background: #3a3a3a; color: #888; }
+.btn-ghost { background: rgba(61,255,139,.12); color: var(--hud); box-shadow: inset 0 0 0 1px var(--hud); }
+.btn-dim { background: rgba(255,255,255,.06); color: #aac; box-shadow: inset 0 0 0 1px #445; }
+.pass-input { border-color: var(--danger); background: rgba(60,0,0,.5); color: #ffb3b3; letter-spacing: 5px; text-align: center; font-weight: bold; }
+.check-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--hud); font-size: .95rem; }
+.check-row input { -webkit-appearance: checkbox; appearance: auto; width: 20px; height: 20px; margin: 0; padding: 0; accent-color: var(--hud); }
+.sync-row { font-family: var(--mono); font-size: .85rem; color: var(--muted); }
+.sync-row b { color: var(--energy); font-weight: normal; }
+.hint { font-size: .8rem; color: var(--muted); margin-top: 10px; line-height: 1.6; }
 
-/* 列表 */
-.item { border: 1px solid #333; padding: 15px; margin-top: 10px; background: #1a1a1a; border-radius: 8px; }
-.item-head { display: flex; justify-content: space-between; margin-bottom: 5px; }
-.tag { background: #004444; color: #00f2ff; padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; }
-.item img { width: 100%; margin-top: 10px; border-radius: 5px; border: 1px solid #333; }
+/* ---------- 紀錄 ---------- */
+.item { border: 1px solid var(--hud-faint); border-left: 3px solid var(--hud); padding: 14px; margin-top: 12px; background: rgba(0,0,0,.45); }
+.item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; }
+.item-date { font-family: var(--mono); color: var(--hud); font-size: 1.05rem; }
+.item-date small { color: var(--muted); }
+.tag { border: 1px solid var(--hud-dim); color: var(--hud); padding: 2px 6px; font-size: .8rem; white-space: nowrap; }
+.src { font-family: var(--mono); font-size: .7rem; padding: 2px 6px; margin-left: 6px; color: var(--energy); border: 1px solid var(--energy); white-space: nowrap; }
+.item-info { margin: 5px 0; color: #9db8a6; font-size: .9rem; }
+.item-stats { font-family: var(--digit); color: var(--hud); font-size: .85rem; font-weight: 700; }
+.item-gain { font-family: var(--digit); color: var(--energy); font-size: .85rem; font-weight: 700; margin-left: 8px; }
+.item-break { font-family: var(--mono); color: #120800; background: var(--danger); font-size: .75rem; padding: 1px 6px; margin-left: 8px; animation: blink 1s infinite; }
+.goal-row { display: flex; justify-content: space-between; margin-top: 14px; font-family: var(--mono); font-size: .85rem; color: var(--muted); }
+.goal-row b { color: var(--energy); font-weight: normal; }
+.goal-bg { width: 100%; height: 6px; background: rgba(255,157,0,.12); margin-top: 6px; overflow: hidden; }
+.goal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--energy), var(--danger)); box-shadow: 0 0 10px var(--energy); transition: width .8s; }
+.item-note { color: var(--text); margin-top: 5px; font-size: .95rem; }
+.item img { width: 100%; margin-top: 10px; border: 1px solid var(--hud-faint); display: block; }
+.ai-wait {
+    margin-top: 10px; height: 140px; border: 1px dashed var(--hud-dim); display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); color: var(--hud); font-size: .9rem; letter-spacing: 1px; animation: blink 1.4s infinite;
+}
+.ai-fail { animation: none; color: var(--danger); border-color: var(--danger); }
+.item-btns { display: flex; gap: 8px; margin-top: 10px; }
+.item-btns button { margin-top: 0; padding: 10px; font-size: .9rem; }
 
-/* 留言板 */
-.msg-item { border-bottom: 1px solid #333; padding: 10px 0; }
-.msg-head { display: flex; justify-content: space-between; font-size: 0.8rem; color: #888; }
-.msg-body { margin-top: 5px; font-size: 1rem; color: #ddd; }
-.msg-name { color: #39ff14; font-weight: bold; }
+/* ---------- 留言板 ---------- */
+.msg-item { border-bottom: 1px dashed var(--hud-faint); padding: 10px 0; }
+.msg-head { display: flex; justify-content: space-between; font-family: var(--mono); font-size: .8rem; color: var(--muted); }
+.msg-body { margin-top: 5px; font-size: 1rem; color: var(--text); word-break: break-word; }
+.msg-name { color: var(--hud); }
 
-#loading { text-align: center; color: #00f2ff; margin: 10px 0; display: none; }
+#loading { text-align: center; font-family: var(--mono); color: var(--hud); margin: 10px 0; display: none; animation: blink 1s infinite; }
+
+/* ---------- 戰績卡預覽 ---------- */
+#cardModal { position: fixed; inset: 0; background: rgba(0,0,0,.94); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; z-index: 99; box-sizing: border-box; }
+#cardModal img { max-width: 100%; max-height: 68vh; border: 1px solid var(--hud); box-shadow: 0 0 24px rgba(61,255,139,.4); }
+.modal-btns { display: flex; gap: 10px; width: 100%; max-width: 400px; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}
 </style>
 </head>
 <body>
 
 <div class="banner">
-    <div class="version-tag">v32.0 (Smart HD)</div>
+    <div class="version-tag">v34.0 // POWER SCAN</div>
     <div class="banner-text">TBA360 戰情室</div>
 </div>
 
-<div class="box">
-    <div style="text-align:center;color:#888;letter-spacing:2px">戰鬥力 (CP)</div>
-    <div class="cp-val" id="cpVal">0</div>
-    
+<div class="box scanner t1" id="scanner" title="點擊重新測量">
+    <div class="scan-head"><span>◉ 戰鬥力探測器</span><span id="scanState">STANDBY</span></div>
+    <div class="reticle">
+        <div class="aura"></div>
+        <div class="cp-label">POWER LEVEL · 戰鬥力</div>
+        <div class="cp-val" id="cpVal">0</div>
+        <div class="cp-tier" id="cpTier">—</div>
+    </div>
+    <div class="scan-bar"></div>
+
     <div class="grid">
-        <div class="card"><div class="val" id="tDist">0</div><div class="lbl">里程 (km)</div></div>
-        <div class="card"><div class="val" id="tTime">0</div><div class="lbl">時數 (min)</div></div>
-        <div class="card"><div class="val" id="tCal">0</div><div class="lbl">卡路里</div></div>
-        <div class="card"><div class="val" id="tCount">0</div><div class="lbl">次數</div></div>
+        <div class="card"><div class="val" id="tDist">0</div><div class="lbl">里程 KM</div></div>
+        <div class="card"><div class="val" id="tTime">0</div><div class="lbl">時數 MIN</div></div>
+        <div class="card"><div class="val" id="tCal">0</div><div class="lbl">卡路里 KCAL</div></div>
+        <div class="card"><div class="val" id="tCount">0</div><div class="lbl">出擊次數</div></div>
     </div>
 
     <div class="status-row">
@@ -99,15 +261,20 @@ button:disabled { background: #555; color: #888; }
         <span class="days" id="daysDisp">---</span>
     </div>
     <div class="xp-bg"><div class="xp-fill" id="xpBar"></div></div>
+    <div class="goal-row"><span>目標 1,000,000</span><b id="goalInfo">--</b></div>
+    <div class="goal-bg"><div class="goal-fill" id="goalBar"></div></div>
+    <div class="tap-hint">[ 點擊探測器重新測量 ]</div>
 </div>
 
 <div class="box">
-    <h3 style="margin-top:0;border-bottom:1px solid #333;padding-bottom:10px">🔒 寫入紀錄 (Admin)</h3>
+    <h3>◤ 寫入紀錄 <small>ADMIN</small></h3>
+    <div class="sync-row">⌚ GARMIN → STRAVA 自動同步：<b id="syncInfo">--</b></div>
     <input type="date" id="i_date">
     <div class="grid" style="margin-top:0">
         <select id="i_type">
             <option>🚴 騎行</option><option>🚶 快走</option><option>🏃 跑步</option>
-            <option>🏀 打球</option><option>🏋️ 重訓</option><option>🛌 休息</option>
+            <option>🏀 打球</option><option>🏋️ 重訓</option><option>🏊 游泳</option>
+            <option>🛌 休息</option><option>🏅 其他</option>
         </select>
         <select id="i_knee"><option>🟢舒服</option><option>🟡微酸</option><option>🔴疼痛</option></select>
     </div>
@@ -120,331 +287,699 @@ button:disabled { background: #555; color: #888; }
         <input type="number" id="i_sleep" placeholder="睡眠">
         <input type="number" id="i_weight" placeholder="體重" step="0.1">
     </div>
-    <div style="margin-top:10px;border:1px dashed #444;padding:10px">
-        <label style="color:#aaa;font-size:0.9rem">📸 圖片</label>
+    <div style="margin-top:10px;border:1px dashed var(--hud-faint);padding:10px">
+        <label style="color:var(--muted);font-size:0.9rem">📸 照片（選填）</label>
         <input type="file" id="i_file" accept="image/*" style="margin-top:5px">
     </div>
     <textarea id="i_note" placeholder="心得..."></textarea>
+    <label class="check-row"><input type="checkbox" id="i_ai" checked> 🎨 AI 自動生成戰績圖</label>
     <input type="password" id="i_pass" class="pass-input" placeholder="請輸入密碼">
     <button id="btnSave">送出紀錄</button>
+    <button id="btnSync" class="btn-ghost">🔄 立即同步 Garmin / Strava</button>
+    <div class="hint">Garmin 的運動每小時會自動匯入並生圖，不用手動輸入。<br>睡眠、體重、沒戴錶的運動再用上面的表單補。</div>
 </div>
 
 <div class="box">
-    <h3 style="margin-top:0">➤ 歷史紀錄</h3>
-    <div id="loading">☁️ 同步中...</div>
+    <h3>◤ 戰鬥紀錄 <small>LOG</small></h3>
+    <div id="loading">// SYNCING...</div>
     <div id="list"></div>
 </div>
 
 <div class="box">
-    <h3 style="margin-top:0;border-bottom:1px solid #333;padding-bottom:10px">💬 戰友留言板</h3>
+    <h3>◤ 戰友留言板 <small>COMMS</small></h3>
     <div id="msgList" style="max-height:300px;overflow-y:auto;margin-bottom:10px">
-        <div style="color:#555;text-align:center">暫無留言</div>
+        <div style="color:var(--muted);text-align:center">暫無留言</div>
     </div>
-    <div style="border-top:1px dashed #444;padding-top:10px">
-        <input type="text" id="m_name" placeholder="您的暱稱">
-        <input type="text" id="m_text" placeholder="寫句加油的話...">
-        <button id="btnMsg" style="background:#004444;color:#00f2ff;border:1px solid #00f2ff">📢 發送留言 (+1% CP)</button>
+    <div style="border-top:1px dashed var(--hud-faint);padding-top:10px">
+        <input type="text" id="m_name" placeholder="您的暱稱" maxlength="20">
+        <input type="text" id="m_text" placeholder="寫句加油的話..." maxlength="200">
+        <button id="btnMsg" class="btn-ghost">📢 發送留言</button>
     </div>
 </div>
 
+<div id="cardModal">
+    <img id="cardImg" alt="戰績卡">
+    <div style="font-size:.8rem;color:var(--muted);margin:10px 0">手機也可以長按圖片直接儲存</div>
+    <div class="modal-btns">
+        <button id="btnShare">📤 分享</button>
+        <button id="btnDl" class="btn-ghost">💾 下載</button>
+    </div>
+    <button id="btnClose" class="btn-dim" style="max-width:400px">關閉</button>
+</div>
+
 <script>
-// ▼ 設定區 ▼
+// ▼ 設定區 ▼（密碼在後端的指令碼屬性 ADMIN_PASS）
 var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-var KEY = "TBA360_V32";
-var ADMIN_PASS = "8888"; 
+var KEY = "TBA360_V35";
+var GOAL_DATE = new Date(2026, 10, 13);
+
+// ── 戰鬥力公式（只用 Strava 拿得到的資料）──
+// 修行值 = 卡路里 + 爬升公尺（沒有卡路里時用 分鐘×8 估算）
+// 每累積 1,000 修行值，戰鬥力 ×GROWTH
+// 單次「極限突破」（騎車 ≥100km、跑步 ≥21km、或任何運動 ≥180 分鐘）再 ×BREAK_MULTI
+var GROWTH = 1.35;
+var BREAK_MULTI = 2;
+var ANCHOR_TIME = '2026-10-31 17:30';   // 校準點：這個時間點的戰鬥力 = ANCHOR_CP
+var ANCHOR_CP = 14444;
+var GOAL_CP = 1000000;
+
+// 總戰鬥力的等級門檻與稱號
+var TOTAL_TIERS = [[30000, '鍛鍊中'], [100000, '強者'], [300000, '猛者'], [1000000, '超越極限'], [Infinity, '⚠ 規格外']];
+// 單次運動的倍率等級（戰績卡）
+var ACT_TIERS = [[1.1, '熱身'], [1.3, '認真'], [1.8, '全力'], [3, '爆發'], [Infinity, '極限突破']];
+var TIER_COLORS = ['#9fe8ff', '#3dff8b', '#ffe14d', '#ff9d00', '#ff3b3b'];
 // ▲ 設定區 ▲
 
-var globalMsgCount = 0;
-var saveTimeout = null; 
+var LOGS = [];
+var curLv = 1, curCP = 0, shownCP = null;
+var pollTimer = null, scanRaf = null, audioCtx = null;
+var cardBlob = null, cardName = '';
 
-window.onload = function() {
-    document.getElementById('i_date').value = new Date().toISOString().slice(0,10);
-    
-    var diff = new Date(2026,10,13) - new Date();
-    var d = Math.floor(diff/86400000);
-    document.getElementById('daysDisp').innerText = (d>0?d:0) + " DAYS LEFT";
+window.onload = function () {
+    $('i_date').value = localDate();
+    $('daysDisp').innerText = daysLeft() + " DAYS LEFT";
 
     loadLocal();
-    if(GAS_URL) loadCloud();
+    loadCloud();
 
-    document.getElementById('btnSave').onclick = saveData;
-    document.getElementById('btnMsg').onclick = sendMsg;
+    $('scanner').onclick = function () { scanTo(curCP, true); };
+    $('btnSave').onclick = saveData;
+    $('btnSync').onclick = syncNow;
+    $('btnMsg').onclick = sendMsg;
+    $('list').onclick = onListClick;
+    $('btnShare').onclick = shareCard;
+    $('btnDl').onclick = downloadCard;
+    $('btnClose').onclick = closeCard;
 };
 
+/* ---------- 小工具 ---------- */
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+function localDate() {
+    var d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 10);
+}
+function daysLeft() {
+    var d = Math.floor((GOAL_DATE - new Date()) / 86400000);
+    return d > 0 ? d : 0;
+}
+function num(v) { return parseFloat(v) || 0; }
+function isPending(item) { return item.aiStatus === 'pending' || /^retry/.test(item.aiStatus || ''); }
+function tierIndex(v, tiers) { for (var i = 0; i < tiers.length; i++) if (v < tiers[i][0]) return i; return tiers.length - 1; }
+
+/* ---------- 戰鬥力公式 ---------- */
+function xpOf(item) {
+    if (item.type === '🛌 休息') return 0;
+    var cal = num(item.cal) || num(item.time) * 8;
+    return cal + num(item.elev);
+}
+function isBreak(item) {
+    var t = item.type || '', d = num(item.dist), m = num(item.time);
+    return (/騎行/.test(t) && d >= 100) || (/跑步/.test(t) && d >= 21) || (item.type !== '🛌 休息' && m >= 180);
+}
+function actMulti(item) { return Math.pow(GROWTH, xpOf(item) / 1000) * (isBreak(item) ? BREAK_MULTI : 1); }
+function tkey(item) { return (item.date || '') + ' ' + (item.start || '00:00'); }
+
+// 依時間順序累乘，算出每筆運動前後的戰鬥力；以 ANCHOR_TIME = ANCHOR_CP 校準
+function computeCP(list) {
+    var sorted = list.slice().sort(function (a, b) { return tkey(a) < tkey(b) ? -1 : tkey(a) > tkey(b) ? 1 : 0; });
+    var logBefore = 0;
+    sorted.forEach(function (it) { if (tkey(it) <= ANCHOR_TIME) logBefore += Math.log(actMulti(it)); });
+    var base = ANCHOR_CP / Math.exp(logBefore), acc = 0;
+    sorted.forEach(function (it) {
+        var before = base * Math.exp(acc);
+        it._multi = actMulti(it);
+        it._break = isBreak(it);
+        acc += Math.log(it._multi);
+        it._cp = Math.floor(base * Math.exp(acc));
+        it._gain = Math.floor(it._cp - before);
+    });
+    return Math.floor(base * Math.exp(acc));
+}
+function actTier(item) { return item._break ? 4 : tierIndex(item._multi || 1, ACT_TIERS); }
+
+// 依可用寬度自動縮放大數字
+function setCPText(text) {
+    var el = $('cpVal');
+    el.innerText = text;
+    var w = el.parentElement.clientWidth - 24;
+    el.style.fontSize = Math.max(26, Math.min(62, w / (text.length * 0.8))) + 'px';
+}
+function post(obj) {
+    return fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(obj)
+    }).then(function (r) { return r.json(); });
+}
+function withTimeout(p, ms) {
+    return Promise.race([p, new Promise(function (_, rej) {
+        setTimeout(function () { rej(new Error('等候逾時，紀錄可能已經存進去了，稍後重新整理看看')); }, ms);
+    })]);
+}
+function getPass() {
+    var p = $('i_pass').value;
+    if (!p) { alert("請先在密碼欄輸入密碼"); $('i_pass').focus(); }
+    return p;
+}
+function imgSrc(v) {
+    v = String(v || '');
+    if (/^(data:image\/|https?:\/\/)/.test(v)) return v;
+    return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(v) + '&sz=w1080';
+}
+function imgTag(v, alt) {
+    v = String(v || '');
+    var fb = /^(data:|https?:)/.test(v) ? '' :
+        ' onerror="this.onerror=null;this.src=\'https://lh3.googleusercontent.com/d/' + esc(encodeURIComponent(v)) + '=w1080\'"';
+    return '<img src="' + esc(imgSrc(v)) + '" loading="lazy" alt="' + alt + '"' + fb + '>';
+}
+
+/* ---------- 戰鬥力掃描動畫 ---------- */
+function beep(freq, dur, vol) {
+    if (!audioCtx) return;
+    var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'square'; o.frequency.value = freq;
+    g.gain.value = vol || 0.04;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+}
+
+function scanTo(target, withSound) {
+    var sc = $('scanner');
+    if (withSound) {
+        try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) {}
+    }
+    cancelAnimationFrame(scanRaf);
+    var ti = tierIndex(target, TOTAL_TIERS);
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var finish = function () {
+        setCPText(target.toLocaleString());
+        sc.className = 'box scanner t' + (ti + 1) + ' locked';
+        $('scanState').innerText = ti === 4 ? 'OVERLOAD' : 'LOCKED';
+        $('cpTier').innerText = '【' + TOTAL_TIERS[ti][1] + '】';
+        if (withSound && audioCtx) { beep(1320, .08, .05); setTimeout(function () { beep(1760, .18, .05); }, 90); }
+        shownCP = target;
+    };
+    if (reduce) { finish(); return; }
+
+    sc.className = 'box scanner t' + (ti + 1) + ' scanning';
+    $('scanState').innerText = 'SCANNING';
+    $('cpTier').innerText = '測量中…';
+    var digits = Math.max(1, String(target).length), t0 = performance.now(), dur = 1700, lastBeep = 0;
+    var step = function (now) {
+        var t = now - t0;
+        if (t >= dur) { finish(); return; }
+        var shown;
+        if (t < dur * 0.55) {
+            // 前段：亂數狂跳
+            shown = Math.floor(Math.random() * Math.pow(10, digits));
+        } else {
+            // 後段：逼近真實數值
+            var k = (t - dur * 0.55) / (dur * 0.45);
+            k = 1 - Math.pow(1 - k, 3);
+            shown = Math.floor(target * k + Math.random() * target * (1 - k) * 0.3);
+        }
+        setCPText(shown.toLocaleString());
+        if (withSound && t - lastBeep > 110) { beep(880 + Math.random() * 600, .03); lastBeep = t; }
+        scanRaf = requestAnimationFrame(step);
+    };
+    scanRaf = requestAnimationFrame(step);
+}
+
+/* ---------- 讀取 ---------- */
 function loadLocal() {
-    try {
-        var d = JSON.parse(localStorage.getItem(KEY) || "[]");
-        render(d);
-    } catch(e) { console.error("Local load error", e); }
+    try { render(JSON.parse(localStorage.getItem(KEY) || "[]")); }
+    catch (e) { console.error("Local load error", e); }
 }
 
 function loadCloud() {
-    document.getElementById('loading').style.display = 'block';
-    fetch(GAS_URL)
-    .then(r => r.json())
-    .then(d => {
-        document.getElementById('loading').style.display = 'none';
-        if(d.msgs) {
-            globalMsgCount = d.msgs.length;
-            renderMsgs(d.msgs);
-        }
-        if(d.logs) {
-            try {
-                localStorage.setItem(KEY, JSON.stringify(d.logs.slice(0, 10)));
-            } catch(e) { console.warn("LocalStorage 仍滿", e); }
-            render(d.logs);
-        }
-    })
-    .catch(e => {
-        document.getElementById('loading').style.display = 'none';
-        console.log("Cloud Err:", e);
+    $('loading').style.display = 'block';
+    return fetch(GAS_URL)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            $('loading').style.display = 'none';
+            if (d.ok === false) { console.warn(d.err); return; }
+            renderMsgs(d.msgs || []);
+            $('syncInfo').innerText = d.lastSync ? '上次 ' + d.lastSync : '尚未同步';
+            if (d.logs) {
+                try {
+                    var slim = d.logs.slice(0, 60).map(function (l) {
+                        return Object.assign({}, l, { img: /^data:/.test(l.img || '') ? '' : l.img });
+                    });
+                    localStorage.setItem(KEY, JSON.stringify(slim));
+                } catch (e) { console.warn("LocalStorage 寫入失敗", e); }
+                render(d.logs);
+            }
+        })
+        .catch(function (e) {
+            $('loading').style.display = 'none';
+            console.log("Cloud Err:", e);
+        });
+}
+
+/* ---------- 手動新增 ---------- */
+function saveData() {
+    var pass = getPass();
+    if (!pass) return;
+
+    var btn = $('btnSave');
+    var wantAI = $('i_ai').checked;
+    btn.disabled = true;
+    btn.innerText = "準備中...";
+
+    var file = $('i_file').files[0];
+    var prep = file ? (btn.innerText = "壓縮照片中...", resizeImg(file)) : Promise.resolve("");
+
+    prep.then(function (img64) {
+        btn.innerText = wantAI ? "上傳中，AI 繪圖約需 20–40 秒..." : "上傳雲端中...";
+        return withTimeout(post({
+            action: 'log',
+            pass: pass,
+            date: $('i_date').value,
+            type: $('i_type').value,
+            knee: $('i_knee').value,
+            dist: $('i_dist').value,
+            time: $('i_time').value,
+            cal: $('i_cal').value,
+            sleep: $('i_sleep').value,
+            weight: $('i_weight').value,
+            note: $('i_note').value,
+            img: img64,
+            ai: wantAI
+        }), wantAI ? 150000 : 40000);
+    }).then(function (d) {
+        if (!d.ok) { alert("❌ " + (d.err || "儲存失敗")); return; }
+        var msg = "✅ 紀錄成功";
+        if (wantAI) msg += (d.ai && d.ai.ok) ? "，AI 戰績圖完成！" : "（AI 圖稍後會自動補上）";
+        alert(msg);
+        ['i_note', 'i_file', 'i_pass', 'i_dist', 'i_time', 'i_cal'].forEach(function (id) { $(id).value = ""; });
+        loadCloud();
+    }).catch(function (e) {
+        alert("⚠️ " + e.message);
+    }).then(function () {
+        btn.disabled = false;
+        btn.innerText = "送出紀錄";
     });
 }
 
-function saveData() {
-    var pass = document.getElementById('i_pass').value;
-    if(pass !== ADMIN_PASS) { alert("❌ 密碼錯誤"); return; }
+function resizeImg(file) {
+    return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(file), img = new Image();
+        img.onload = function () {
+            var max = 1280, k = Math.min(1, max / Math.max(img.width, img.height));
+            var c = document.createElement('canvas');
+            c.width = Math.round(img.width * k);
+            c.height = Math.round(img.height * k);
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            URL.revokeObjectURL(url);
+            resolve(c.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("圖片載入錯誤")); };
+        img.src = url;
+    });
+}
 
-    var btn = document.getElementById('btnSave');
-    btn.innerText = "準備中...";
+/* ---------- 同步 / 重新生圖 ---------- */
+function syncNow() {
+    var pass = getPass();
+    if (!pass) return;
+    var btn = $('btnSync');
     btn.disabled = true;
-
-    saveTimeout = setTimeout(function() {
-        alert("⚠️ 處理逾時！可能是圖片太大。");
-        resetUI();
-    }, 20000);
-
-    var file = document.getElementById('i_file').files[0];
-    if(file) {
-        var imgUrl = URL.createObjectURL(file);
-        btn.innerText = "最佳化壓縮中...";
-        
-        resizeImg(imgUrl, function(base64) {
-            URL.revokeObjectURL(imgUrl);
-            commitSave(base64);
-        });
-    } else {
-        commitSave("");
-    }
-}
-
-function resizeImg(src, cb) {
-    var img = new Image();
-    img.onerror = function() {
-        alert("圖片載入錯誤");
-        cb(""); 
-    };
-    img.onload = function() {
-        var c = document.createElement('canvas');
-        // ★ 解析度提升至 600px，畫質大幅改善
-        var max = 600; 
-        var w = img.width, h = img.height;
-        if(w>h){ if(w>max){h*=max/w; w=max}} else{ if(h>max){w*=max/h; h=max}}
-        c.width=w; c.height=h;
-        var ctx = c.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        
-        // ★ 智慧動態壓縮：測試最佳畫質，確保不超過 Google Sheet 的 5萬字元限制 (安全抓 45000)
-        var quality = 0.8; // 從 80% 高畫質開始試
-        var base64 = c.toDataURL('image/jpeg', quality);
-        
-        // 如果太大，就逐漸降低畫質，直到塞得下為止
-        while (base64.length > 45000 && quality > 0.1) {
-            quality -= 0.1;
-            base64 = c.toDataURL('image/jpeg', parseFloat(quality.toFixed(1)));
-        }
-        
-        console.log("壓縮完畢, 品質:", quality.toFixed(1), "大小:", base64.length);
-        cb(base64);
-    };
-    img.src = src;
-}
-
-function commitSave(img64) {
-    var btn = document.getElementById('btnSave');
-    btn.innerText = "上傳雲端中...";
-
-    var obj = {
-        date: document.getElementById('i_date').value,
-        type: document.getElementById('i_type').value,
-        knee: document.getElementById('i_knee').value,
-        dist: document.getElementById('i_dist').value,
-        time: document.getElementById('i_time').value,
-        cal: document.getElementById('i_cal').value,
-        sleep: document.getElementById('i_sleep').value,
-        weight: document.getElementById('i_weight').value,
-        note: document.getElementById('i_note').value,
-        img: img64
-    };
-
-    try {
-        var list = JSON.parse(localStorage.getItem(KEY) || "[]");
-        list.unshift(obj);
-        if(list.length > 10) list = list.slice(0, 10);
-        localStorage.setItem(KEY, JSON.stringify(list));
-        render(list);
-    } catch(e) { console.warn("無法存入本機", e); }
-
-    if(GAS_URL) {
-        fetch(GAS_URL, {
-            method: 'POST',
-            headers: {'Content-Type': 'text/plain;charset=utf-8'},
-            body: JSON.stringify(obj)
-        })
-        .then(r => r.json())
-        .then(d => {
-            clearTimeout(saveTimeout);
-            alert("✅ 紀錄成功");
-            resetUI();
+    btn.innerText = "同步中（含 AI 繪圖，最多約 2 分鐘）...";
+    withTimeout(post({ action: 'sync', pass: pass }), 300000)
+        .then(function (d) {
+            var m = [];
+            if (d.err) m.push("⚠️ " + d.err);
+            if (d.note) m.push("ℹ️ " + d.note);
+            if (d.added != null) m.push("✅ 新增 " + d.added + " 筆運動，完成 " + (d.ai || 0) + " 張 AI 圖");
+            alert(m.join("\n"));
             loadCloud();
         })
-        .catch(e => {
-            clearTimeout(saveTimeout);
-            alert("⚠️ 存入本機 (雲端失敗)");
-            resetUI();
-        });
-    } else {
-        clearTimeout(saveTimeout);
-        alert("✅ 本機已存");
-        resetUI();
-    }
+        .catch(function (e) { alert("⚠️ " + e.message); })
+        .then(function () { btn.disabled = false; btn.innerText = "🔄 立即同步 Garmin / Strava"; });
 }
 
-function sendMsg() {
-    var name = document.getElementById('m_name').value;
-    var text = document.getElementById('m_text').value;
-    if(!name || !text) { alert("請輸入暱稱和內容"); return; }
+function onListClick(e) {
+    var b = e.target.closest('button[data-act]');
+    if (!b) return;
+    var item = LOGS[+b.dataset.i];
+    if (!item) return;
+    if (b.dataset.act === 'card') openCard(item, b);
+    if (b.dataset.act === 'regen') regen(item, b);
+}
 
-    var btn = document.getElementById('btnMsg');
+function regen(item, btn) {
+    var pass = getPass();
+    if (!pass) return;
+    btn.disabled = true;
+    btn.innerText = "🎨 繪製中...";
+    withTimeout(post({ action: 'regen', pass: pass, id: item.id }), 150000)
+        .then(function (d) {
+            if (!d.ok) alert("❌ " + (d.err || "生圖失敗"));
+            loadCloud();
+        })
+        .catch(function (e) { alert("⚠️ " + e.message); })
+        .then(function () { btn.disabled = false; btn.innerText = "🎨 重新生圖"; });
+}
+
+/* ---------- 留言 ---------- */
+function sendMsg() {
+    var name = $('m_name').value.trim();
+    var text = $('m_text').value.trim();
+    if (!name || !text) { alert("請輸入暱稱和內容"); return; }
+
+    var btn = $('btnMsg');
     btn.innerText = "發送中...";
     btn.disabled = true;
 
-    var msgData = {
-        action: "msg", 
-        time: new Date().toISOString().slice(0,10),
-        name: name,
-        text: text
-    };
-
-    if(GAS_URL) {
-        fetch(GAS_URL, {
-            method: 'POST',
-            headers: {'Content-Type': 'text/plain;charset=utf-8'},
-            body: JSON.stringify(msgData)
+    post({ action: "msg", name: name, text: text })
+        .then(function (d) {
+            if (!d.ok) { alert("❌ " + (d.err || "發送失敗")); return; }
+            alert("✅ 留言成功！感謝應援！");
+            $('m_text').value = "";
+            loadCloud();
         })
-        .then(r => r.json())
-        .then(d => {
-            alert("✅ 留言成功！戰鬥力 UP！");
-            document.getElementById('m_text').value = "";
-            btn.innerText = "📢 發送留言 (+1% CP)";
-            btn.disabled = false;
-            loadCloud(); 
-        })
-        .catch(e => {
-            alert("發送失敗");
-            btn.disabled = false;
-        });
-    }
+        .catch(function () { alert("發送失敗"); })
+        .then(function () { btn.innerText = "📢 發送留言"; btn.disabled = false; });
 }
 
-function resetUI() {
-    clearTimeout(saveTimeout);
-    document.getElementById('btnSave').innerText = "送出紀錄";
-    document.getElementById('btnSave').disabled = false;
-    document.getElementById('i_note').value = "";
-    document.getElementById('i_file').value = "";
-    document.getElementById('i_pass').value = "";
-}
-
+/* ---------- 畫面 ---------- */
 function renderMsgs(msgs) {
-    var el = document.getElementById('msgList');
-    if(!msgs || msgs.length === 0) {
-        el.innerHTML = '<div style="color:#555;text-align:center">暫無留言</div>';
+    var el = $('msgList');
+    if (!msgs || msgs.length === 0) {
+        el.innerHTML = '<div style="color:var(--muted);text-align:center">暫無留言</div>';
         return;
     }
-    el.innerHTML = "";
-    msgs.forEach(m => {
-        var div = document.createElement('div');
-        div.className = "msg-item";
-        div.innerHTML = `
-            <div class="msg-head"><span class="msg-name">${m.name}</span> <span>${m.time}</span></div>
-            <div class="msg-body">${m.text}</div>
-        `;
-        el.appendChild(div);
-    });
+    el.innerHTML = msgs.map(function (m) {
+        return '<div class="msg-item">' +
+            '<div class="msg-head"><span class="msg-name">' + esc(m.name) + '</span> <span>' + esc(m.time) + '</span></div>' +
+            '<div class="msg-body">' + esc(m.text) + '</div></div>';
+    }).join('');
+}
+
+function itemHtml(item, i) {
+    var info = [];
+    if (item.knee) info.push(esc(item.knee));
+    if (item.sleep) info.push('💤' + esc(item.sleep));
+    if (item.weight) info.push('⚖️' + esc(item.weight) + 'kg');
+    if (item.hr) info.push('❤️' + esc(item.hr) + 'bpm');
+    if (item.elev) info.push('⛰️' + esc(item.elev) + 'm');
+
+    var stats = (item.dist ? esc(item.dist) + 'km ' : '') + (item.time ? esc(item.time) + 'min ' : '') + (item.cal ? '🔥' + esc(item.cal) : '');
+    var gain = item._gain || 0;
+    var multi = item._multi && item._multi > 1.0005 ? ' ×' + item._multi.toFixed(2) : '';
+
+    var ai = '';
+    if (item.aiImg) ai = imgTag(item.aiImg, 'AI 戰績圖');
+    else if (isPending(item)) ai = '<div class="ai-wait">// 能量集中中… AI 繪製中</div>';
+    else if (item.aiStatus === 'fail') ai = '<div class="ai-wait ai-fail">AI 生圖失敗，可按「重新生圖」</div>';
+
+    var src = item.source === 'strava' ? '<span class="src">⌚ GARMIN</span>' : '';
+
+    return '<div class="item">' +
+        '<div class="item-head"><span class="item-date">' + esc(item.date) + (item.start ? ' <small>' + esc(item.start) + '</small>' : '') + '</span>' +
+        '<span><span class="tag">' + esc(item.type) + '</span>' + src + '</span></div>' +
+        (info.length ? '<div class="item-info">' + info.join(' | ') + '</div>' : '') +
+        (stats || gain ? '<div><span class="item-stats">' + stats + '</span>' + (gain ? '<span class="item-gain">+' + gain.toLocaleString() + ' CP' + multi + '</span>' : '') +
+            (item._break ? '<span class="item-break">⚡極限突破</span>' : '') + '</div>' : '') +
+        (item.note ? '<div class="item-note">' + esc(item.note) + '</div>' : '') +
+        ai +
+        (item.img ? imgTag(item.img, '照片') : '') +
+        '<div class="item-btns">' +
+            '<button data-act="card" data-i="' + i + '">📥 戰績卡</button>' +
+            (item.id ? '<button class="btn-dim" data-act="regen" data-i="' + i + '">🎨 重新生圖</button>' : '') +
+        '</div></div>';
 }
 
 function render(list) {
-    var cDist=0, cTime=0, cCal=0, cCount=0;
-    var lastW=80, lastS=60;
+    LOGS = list || [];
+    var cDist = 0, cTime = 0, cCal = 0, cCount = 0, anyPending = false;
 
-    var elList = document.getElementById('list');
-    elList.innerHTML = "";
+    curCP = computeCP(LOGS);
 
-    if(list.length > 0) {
-        lastW = parseFloat(list[0].weight) || 80;
-        lastS = parseFloat(list[0].sleep) || 60;
-    }
-
-    list.forEach(item => {
-        if(item.type !== "🛌 休息") {
+    LOGS.forEach(function (item) {
+        if (item.type !== "🛌 休息") {
             cCount++;
-            cDist += parseFloat(item.dist||0);
-            cTime += parseFloat(item.time||0);
-            cCal += parseFloat(item.cal||0);
+            cDist += num(item.dist);
+            cTime += num(item.time);
+            cCal += num(item.cal);
         }
-        
-        var div = document.createElement('div');
-        div.className = "item";
-        div.innerHTML = `
-            <div class="item-head">
-                <b style="color:#00f2ff">${item.date}</b>
-                <span class="tag">${item.type}</span>
-            </div>
-            <div style="margin:5px 0;color:#aaa;font-size:0.9rem">${item.knee} | 💤${item.sleep} | ⚖️${item.weight}kg</div>
-            <div style="color:#39ff14;font-size:0.9rem;font-weight:bold">
-                ${item.dist?item.dist+'km ':''} ${item.time?item.time+'min ':''} ${item.cal?'🔥'+item.cal:''}
-            </div>
-            <div style="color:#fff;margin-top:5px;font-size:0.95rem">${item.note||''}</div>
-            ${item.img ? '<img src="'+item.img+'">' : ''}
-        `;
-        elList.appendChild(div);
+        if (isPending(item)) anyPending = true;
     });
 
-    document.getElementById('tDist').innerText = cDist.toFixed(1);
-    document.getElementById('tTime').innerText = cTime; 
-    document.getElementById('tCal').innerText = cCal;
-    document.getElementById('tCount').innerText = cCount;
-    
-    var lv = Math.floor(cCount/5)+1;
-    document.getElementById('lvDisp').innerText = "Lv." + lv + " 騎士";
-    document.getElementById('xpBar').style.width = (cCount%5)*20 + "%";
+    curLv = Math.floor(cCount / 5) + 1;
 
-    var base = cDist + cTime + cCal; 
-    var multi = 1 + (cCount + (80-lastW)*10 + (lastS/60) + cCount + globalMsgCount)/100;
-    document.getElementById('cpVal').innerText = Math.floor(base * multi).toLocaleString();
+    // 目標進度（對數尺度：每乘一次倍率前進一樣多）
+    var prog = Math.max(0, Math.min(1, Math.log(curCP / ANCHOR_CP) / Math.log(GOAL_CP / ANCHOR_CP)));
+    $('goalBar').style.width = (prog * 100).toFixed(1) + '%';
+    $('goalInfo').innerText = curCP >= GOAL_CP ? '🎯 目標達成！' : '還差 ×' + (GOAL_CP / curCP).toFixed(1);
 
-    var sleepList = list.filter(function(x){ return x.sleep && parseFloat(x.sleep)>0; });
-    var weightList = list.filter(function(x){ return x.weight && parseFloat(x.weight)>0; });
+    $('list').innerHTML = LOGS.map(itemHtml).join('') || '<div style="color:var(--muted);text-align:center">還沒有紀錄</div>';
 
-    if(sleepList.length > 0) {
-        var sCount = Math.min(sleepList.length, 3);
-        var sSum = 0;
-        for(var i=0; i<sCount; i++) sSum += parseFloat(sleepList[i].sleep);
-        var sAvg = (sSum / sCount).toFixed(1);
-        var sColor = sAvg >= 70 ? "#39ff14" : (sAvg >= 60 ? "#ffff00" : "#ff3131");
-        document.getElementById('avgSleep').innerHTML = `<span style="color:${sColor}">${sAvg}</span>`;
-    } else { document.getElementById('avgSleep').innerText = "--"; }
+    $('tDist').innerText = cDist.toFixed(1);
+    $('tTime').innerText = Math.round(cTime);
+    $('tCal').innerText = Math.round(cCal);
+    $('tCount').innerText = cCount;
+    $('lvDisp').innerText = "Lv." + curLv + " 騎士";
+    $('xpBar').style.width = (cCount % 5) * 20 + "%";
 
-    if(weightList.length > 0) {
-        var wCount = Math.min(weightList.length, 3);
-        var wSum = 0;
-        for(var j=0; j<wCount; j++) wSum += parseFloat(weightList[j].weight);
-        var wAvg = (wSum / wCount).toFixed(1);
-        var currentW = parseFloat(weightList[0].weight);
-        var wColor = currentW < wAvg ? "#39ff14" : (currentW > wAvg ? "#ff3131" : "#fff");
-        document.getElementById('avgWeight').innerHTML = `<span style="color:${wColor}">${wAvg} kg</span>`;
-    } else { document.getElementById('avgWeight').innerText = "--"; }
+    // 數值有變才重新掃描
+    if (curCP !== shownCP) scanTo(curCP, false);
+
+    var sleepList = LOGS.filter(function (x) { return num(x.sleep) > 0; });
+    var weightList = LOGS.filter(function (x) { return num(x.weight) > 0; });
+
+    if (sleepList.length > 0) {
+        var sCount = Math.min(sleepList.length, 3), sSum = 0;
+        for (var i = 0; i < sCount; i++) sSum += num(sleepList[i].sleep);
+        var sAvg = sSum / sCount;
+        var sColor = sAvg >= 70 ? "var(--hud)" : (sAvg >= 60 ? "#ffe14d" : "var(--danger)");
+        $('avgSleep').innerHTML = '<span style="color:' + sColor + '">' + sAvg.toFixed(1) + '</span>';
+    } else { $('avgSleep').innerText = "--"; }
+
+    if (weightList.length > 0) {
+        var wCount = Math.min(weightList.length, 3), wSum = 0;
+        for (var j = 0; j < wCount; j++) wSum += num(weightList[j].weight);
+        var wAvg = wSum / wCount;
+        var currentW = num(weightList[0].weight);
+        var wColor = currentW < wAvg ? "var(--hud)" : (currentW > wAvg ? "var(--danger)" : "#fff");
+        $('avgWeight').innerHTML = '<span style="color:' + wColor + '">' + wAvg.toFixed(1) + ' kg</span>';
+    } else { $('avgWeight').innerText = "--"; }
+
+    // 還有圖在排隊時，每 2 分鐘自動刷新一次
+    clearTimeout(pollTimer);
+    if (anyPending) pollTimer = setTimeout(function () { if (!document.hidden) loadCloud(); else render(LOGS); }, 120000);
+}
+
+/* ---------- 戰績卡（AI 圖 + 探測器數據） ---------- */
+function loadImage(src) {
+    return new Promise(function (resolve, reject) {
+        var im = new Image();
+        im.onload = function () { resolve(im); };
+        im.onerror = function () { reject(new Error('背景圖載入失敗')); };
+        im.src = src;
+    });
+}
+
+function openCard(item, btn) {
+    var old = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "測量中...";
+
+    var srcId = item.aiImg || item.img || '';
+    var getBg;
+    if (/^data:image\//.test(srcId)) getBg = Promise.resolve(srcId);
+    else if (srcId && !/^https?:/.test(srcId)) {
+        // 透過後端取得圖片資料，canvas 才能匯出
+        getBg = fetch(GAS_URL + '?action=img&id=' + encodeURIComponent(srcId))
+            .then(function (r) { return r.json(); })
+            .then(function (j) { return j.ok ? j.data : null; });
+    } else getBg = Promise.resolve(null);
+
+    var fonts = document.fonts ? Promise.all([
+        document.fonts.load('900 120px Orbitron'),
+        document.fonts.load('700 60px Orbitron'),
+        document.fonts.load('30px "Share Tech Mono"')
+    ]).catch(function () {}) : Promise.resolve();
+
+    Promise.all([getBg.then(function (data) { return data ? loadImage(data) : null; }).catch(function () { return null; }), fonts])
+        .then(function (res) {
+            var canvas = drawCard(item, res[0]);
+            return new Promise(function (r) { canvas.toBlob(r, 'image/jpeg', 0.92); });
+        })
+        .then(function (blob) {
+            cardBlob = blob;
+            cardName = 'TBA360_' + item.date + '.jpg';
+            $('cardImg').src = URL.createObjectURL(blob);
+            $('cardModal').style.display = 'flex';
+        })
+        .catch(function (e) { alert("戰績卡生成失敗：" + e.message); })
+        .then(function () { btn.disabled = false; btn.innerText = old; });
+}
+
+function drawCard(item, bg) {
+    var W = 1080, H = 1350;
+    var c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    var x = c.getContext('2d');
+    var F = '"PingFang TC","Noto Sans TC","Microsoft JhengHei",-apple-system,sans-serif';
+    var D = 'Orbitron,"Share Tech Mono",monospace';
+    var MONO = '"Share Tech Mono",ui-monospace,monospace';
+    var HUD = '#3dff8b';
+    if (item._cp == null) computeCP(LOGS);
+    var gain = item._gain || 0;
+    var ti = actTier(item);
+    var AURA = TIER_COLORS[ti];
+
+    function glow(color, blur) { x.shadowColor = color; x.shadowBlur = blur; }
+    function noGlow() { x.shadowBlur = 0; }
+    function clip(text, maxW) {
+        text = String(text);
+        if (x.measureText(text).width <= maxW) return text;
+        while (text.length && x.measureText(text + '…').width > maxW) text = text.slice(0, -1);
+        return text + '…';
+    }
+    function bracket(x0, y0, x1, y1, len, color, w) {
+        x.strokeStyle = color; x.lineWidth = w;
+        [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]].forEach(function (p) {
+            x.beginPath();
+            x.moveTo(p[0] + p[2] * len, p[1]); x.lineTo(p[0], p[1]); x.lineTo(p[0], p[1] + p[3] * len);
+            x.stroke();
+        });
+    }
+
+    // 背景圖
+    if (bg) {
+        var k = Math.max(W / bg.width, H / bg.height);
+        x.drawImage(bg, (W - bg.width * k) / 2, (H - bg.height * k) / 2, bg.width * k, bg.height * k);
+    } else {
+        var g0 = x.createRadialGradient(W / 2, 520, 50, W / 2, 520, 700);
+        g0.addColorStop(0, AURA); g0.addColorStop(.35, '#06210f'); g0.addColorStop(1, '#000');
+        x.fillStyle = g0; x.fillRect(0, 0, W, H);
+    }
+    // 探測器綠色濾鏡 + 掃描線 + 暗角
+    x.fillStyle = 'rgba(40,255,120,0.07)'; x.fillRect(0, 0, W, H);
+    x.fillStyle = 'rgba(0,0,0,0.16)';
+    for (var sy = 0; sy < H; sy += 4) x.fillRect(0, sy, W, 1);
+    var vg = x.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.8);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.55)');
+    x.fillStyle = vg; x.fillRect(0, 0, W, H);
+    var gt = x.createLinearGradient(0, 0, 0, 200);
+    gt.addColorStop(0, 'rgba(0,0,0,.75)'); gt.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = gt; x.fillRect(0, 0, W, 200);
+    var gb = x.createLinearGradient(0, 760, 0, H);
+    gb.addColorStop(0, 'rgba(0,0,0,0)'); gb.addColorStop(.3, 'rgba(0,0,0,.85)'); gb.addColorStop(1, 'rgba(0,0,0,.97)');
+    x.fillStyle = gb; x.fillRect(0, 760, W, H - 760);
+
+    // 頂部 HUD
+    glow(HUD, 14);
+    x.fillStyle = HUD; x.font = '34px ' + MONO;
+    x.fillText('◉ 戰鬥力探測器 // TBA360', 50, 80);
+    x.textAlign = 'right';
+    x.fillText(item.date + (item.start ? '  ' + item.start : ''), W - 50, 80);
+    x.textAlign = 'left';
+    x.fillRect(50, 102, W - 100, 2);
+    noGlow();
+
+    // 鎖定框
+    glow(AURA, 16);
+    bracket(150, 200, W - 150, 740, 70, AURA, 5);
+    noGlow();
+    x.fillStyle = AURA; x.font = '26px ' + MONO;
+    x.fillText('TARGET LOCKED', 162, 236);
+    x.textAlign = 'right';
+    x.fillText('LV.' + curLv, W - 162, 236);
+    x.textAlign = 'left';
+
+    // 類型與心得
+    var y = 860;
+    x.fillStyle = '#fff'; x.font = '800 46px ' + F;
+    x.fillText(item.type || '', 50, y);
+    if (item.note) {
+        x.fillStyle = '#cfe9d8'; x.font = '400 30px ' + F;
+        x.fillText(clip(item.note, W - 100), 50, y + 48);
+    }
+
+    // 戰鬥力讀數
+    x.fillStyle = HUD; x.font = '28px ' + MONO;
+    x.fillText('POWER LEVEL  戰鬥力', 50, y + 112);
+    x.textAlign = 'right'; x.fillStyle = AURA;
+    x.fillText('【' + ACT_TIERS[ti][1] + '】', W - 50, y + 112);
+    x.textAlign = 'left';
+    // 大字：這次運動後的總戰鬥力（自動縮到放得下）
+    var cpText = (item._cp || 0).toLocaleString();
+    var fs = 120;
+    x.font = '900 ' + fs + 'px ' + D;
+    while (fs > 60 && x.measureText(cpText).width > W - 100) { fs -= 4; x.font = '900 ' + fs + 'px ' + D; }
+    glow(AURA, 34);
+    x.fillStyle = AURA;
+    x.fillText(cpText, 46, y + 222);
+    glow(AURA, 12);
+    x.fillText(cpText, 46, y + 222);
+    noGlow();
+    // 小字：這次增加多少、倍率
+    x.fillStyle = '#ff9d00'; x.font = '700 34px ' + D;
+    var gainText = '+' + gain.toLocaleString() + '  ×' + (item._multi || 1).toFixed(2);
+    x.fillText(gainText, 50, y + 270);
+    if (item._break) {
+        var gw = x.measureText(gainText).width;
+        x.fillStyle = '#ff3b3b'; x.font = '800 30px ' + F;
+        x.fillText('⚡ 極限突破', 50 + gw + 24, y + 268);
+    }
+
+    // 數據列
+    var cols = [];
+    if (item.dist) cols.push([num(item.dist).toFixed(1), 'KM 公里']);
+    cols.push([String(Math.round(num(item.time))), 'MIN 分鐘']);
+    cols.push([String(Math.round(num(item.cal))), 'KCAL 卡路里']);
+    if (cols.length < 3 && item.hr) cols.push([String(item.hr), 'BPM 心率']);
+    x.fillStyle = 'rgba(61,255,139,.35)'; x.fillRect(50, 1148, W - 100, 1);
+    cols.forEach(function (cv, i) {
+        var cx = 50 + i * 340;
+        x.fillStyle = HUD; x.font = '700 58px ' + D;
+        x.fillText(cv[0], cx, 1208);
+        x.fillStyle = '#86a892'; x.font = '24px ' + MONO;
+        x.fillText(cv[1], cx, 1244);
+    });
+
+    // 底部
+    x.fillStyle = HUD; x.fillRect(0, H - 10, W, 10);
+    x.font = '28px ' + MONO;
+    x.fillText('Lv.' + curLv + ' 騎士', 50, H - 36);
+    x.textAlign = 'right'; x.fillStyle = '#ff9d00';
+    x.fillText('GOAL // ' + daysLeft() + ' DAYS LEFT', W - 50, H - 36);
+    x.textAlign = 'left';
+    return c;
+}
+
+function shareCard() {
+    if (!cardBlob) return;
+    var file = new File([cardBlob], cardName, { type: cardBlob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'TBA360 戰績' }).catch(function (e) {
+            if (e.name !== 'AbortError') downloadCard();
+        });
+    } else downloadCard();
+}
+
+function downloadCard() {
+    var a = document.createElement('a');
+    a.href = $('cardImg').src;
+    a.download = cardName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+function closeCard() {
+    $('cardModal').style.display = 'none';
+    if ($('cardImg').src) URL.revokeObjectURL($('cardImg').src);
+    cardBlob = null;
 }
 </script>
 </body>
