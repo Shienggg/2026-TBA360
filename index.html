@@ -214,6 +214,11 @@ button:disabled { background: #3a3a3a; color: #888; }
 .cp-epithet { position: relative; margin-top: 6px; color: var(--text); font-size: .95rem; line-height: 1.5; }
 .cp-epithet b { color: var(--aura); text-shadow: 0 0 8px var(--aura); }
 .cp-epithet small { display: block; color: var(--muted); font-size: .8rem; }
+.retitle { position: relative; width: auto; margin: 8px auto 0; display: block; padding: 4px 12px; font-size: .75rem; font-weight: normal;
+    background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--hud-faint); clip-path: none; font-family: var(--mono); }
+.pic { position: relative; }
+.pic-swap { position: absolute; right: 8px; bottom: 8px; width: auto; margin: 0; padding: 6px 10px; font-size: .75rem;
+    background: rgba(0,0,0,.7); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.4); clip-path: none; }
 
 /* ---------- 進化畫面 ---------- */
 .evo { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.97); overflow: hidden; --aura: #3dff8b; }
@@ -263,7 +268,7 @@ input:disabled { opacity: .45; }
 <body>
 
 <div class="banner">
-    <div class="version-tag">v40.1 // POWER SCAN</div>
+    <div class="version-tag">v41.0 // POWER SCAN</div>
     <div class="banner-text">TBA360 戰情室</div>
 </div>
 
@@ -275,6 +280,7 @@ input:disabled { opacity: .45; }
         <div class="cp-val" id="cpVal">0</div>
         <div class="cp-tier" id="cpTier">—</div>
         <div class="cp-epithet" id="cpEpithet"></div>
+        <button class="retitle" id="btnRetitle" title="重新生成這一階的 AI 稱號">🎲 換一個稱號</button>
     </div>
     <div class="scan-bar"></div>
 
@@ -340,7 +346,7 @@ input:disabled { opacity: .45; }
         </div>
         <label class="e-lbl">標題</label>
         <input type="text" id="e_note" maxlength="200" placeholder="例：北高資格賽">
-        <label class="e-lbl">感言（生圖會照這段畫）</label>
+        <label class="e-lbl">感言（生圖會照這段畫；有照片時會參考照片重繪成點陣圖）</label>
         <textarea id="e_feel" maxlength="300" placeholder="例：逆風騎到淡水，夕陽超美但大腿快廢了"></textarea>
         <label class="e-lbl">📸 照片（選填，會取代原本的照片）</label>
         <input type="file" id="e_file" accept="image/*">
@@ -440,6 +446,7 @@ window.onload = function () {
 
     $('scanner').onclick = function () { scanTo(curCP, true); };
     $('btnSync').onclick = syncNow;
+    $('btnRetitle').onclick = function (e) { e.stopPropagation(); retitle(); };
     $('btnAdd').onclick = function () { openEdit(null); };
     $('e_save').onclick = saveEdit;
     $('e_cancel').onclick = closeEdit;
@@ -506,14 +513,14 @@ function computeCP(list) {
         var xp = xpOf(it);
         it._xp = xp;
         it._break = xp > 0 && isBreak(it);
-        if (!xp) { it._multi = 1; it._gain = 0; it._cp = beforeStart(it) ? null : Math.floor(START_CP * Math.exp(acc)); return; }
+        if (!xp) { it._multi = 1; it._gain = 0; it._cp = beforeStart(it) ? null : Math.round(START_CP * Math.exp(acc)); return; }
         var before = START_CP * Math.exp(acc);
         acc += lnG * xp / 1000;
         it._multi = Math.exp(lnG * xp / 1000);
-        it._cp = Math.floor(START_CP * Math.exp(acc));
+        it._cp = Math.round(START_CP * Math.exp(acc));
         it._gain = Math.floor(it._cp - before);
     });
-    return Math.floor(START_CP * Math.exp(acc));
+    return Math.round(START_CP * Math.exp(acc));
 }
 function beforeStart(it) { return (it.date || '') < START_DATE; }
 function actInfo(item) {
@@ -645,6 +652,25 @@ function askTitle(ti, cb) {
 }
 
 /* ---------- 進化畫面 ---------- */
+function retitle() {
+    var pass = getPass();
+    if (!pass) return;
+    var ti = titleIndex(curCP), btn = $('btnRetitle');
+    btn.disabled = true;
+    btn.innerText = '🎲 AI 命名中…';
+    post({ action: 'retitle', pass: pass, tier: ti, base: TITLES[ti][1], cp: curCP,
+           recent: LOGS.slice(0, 3).map(function (x) { return { type: x.type, dist: x.dist, words: x.feel || x.note || '' }; }) })
+        .then(function (d) {
+            if (d.err === '密碼錯誤') { sessionPass = ''; alert('❌ 密碼錯誤'); return; }
+            if (!d.ok) { alert('❌ ' + (d.err || '命名失敗')); return; }
+            sessionPass = pass;
+            TITLE_AI[ti] = d.title;
+            $('cpEpithet').innerHTML = epithetHtml(d.title);
+        })
+        .catch(function (e) { alert('⚠️ ' + e.message); })
+        .then(function () { btn.disabled = false; btn.innerText = '🎲 換一個稱號'; });
+}
+
 var SEEN_KEY = KEY + '_seen';
 function loadSeen() { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || 'null'); } catch (e) { return null; } }
 function saveSeen(cp) { try { localStorage.setItem(SEEN_KEY, JSON.stringify({ cp: cp })); } catch (e) {} }
@@ -861,6 +887,7 @@ function onListClick(e) {
     var act = b.dataset.act;
     if (act === 'card') openCard(item, b);
     if (act === 'edit') openEdit(item);
+    if (act === 'swap') { item._showPhoto = !item._showPhoto; $('list').innerHTML = LOGS.map(itemHtml).join(''); }
     if (act === 'feel') toggleFeel(i, true);
     if (act === 'feel-cancel') toggleFeel(i, false);
     if (act === 'feel-go') genWithFeel(item, i, b);
@@ -945,7 +972,8 @@ function itemHtml(item, i) {
     var multi = item._multi && item._multi > 1.0005 ? ' ×' + item._multi.toFixed(2) : '';
 
     var ai = '';
-    if (item.aiImg) ai = imgTag(item.aiImg, 'AI 戰績圖');
+    if (item.aiImg) ai = '<div class="pic">' + imgTag(item._showPhoto && item.img ? item.img : item.aiImg, '戰績圖') +
+        (item.img ? '<button class="pic-swap" data-act="swap" data-i="' + i + '">' + (item._showPhoto ? '🎨 看 AI 圖' : '📷 看原照片') + '</button>' : '') + '</div>';
     else if (isPending(item)) ai = '<div class="ai-wait">// 能量集中中… AI 繪製中</div>';
     else if (item.aiStatus === 'fail') ai = '<div class="ai-wait ai-fail">AI 生圖失敗' +
         (item.aiErr ? '<small>' + esc(item.aiErr.slice(0, 90)) + '</small>' : '') + '</div>';
@@ -956,7 +984,7 @@ function itemHtml(item, i) {
             : item.source === 'legacy' ? '<span class="src src-old">舊紀錄</span>' : '';
 
     var feelBox = item.id ? '<div class="feel-box" id="feel-' + i + '" style="display:none">' +
-        '<textarea class="feel-input" maxlength="300" placeholder="寫下這趟的感言，AI 會照內容畫。例：逆風騎到淡水，夕陽超美但大腿快廢了">' + esc(item.feel || '') + '</textarea>' +
+        '<textarea class="feel-input" maxlength="300" placeholder="寫下這趟的感言，AI 會照內容畫成點陣圖（有照片會參考照片）。例：逆風騎到淡水，夕陽超美但大腿快廢了">' + esc(item.feel || '') + '</textarea>' +
         '<input type="password" class="pass-input feel-pass" placeholder="密碼">' +
         '<div class="item-btns"><button data-act="feel-go" data-i="' + i + '">✨ 依感言生圖</button>' +
         '<button class="btn-dim" data-act="feel-cancel" data-i="' + i + '">取消</button></div></div>' : '';
@@ -970,7 +998,7 @@ function itemHtml(item, i) {
         (item.note ? '<div class="item-note">' + esc(item.note) + '</div>' : '') +
         (item.feel ? '<div class="item-feel">💬 ' + esc(item.feel) + '</div>' : '') +
         ai +
-        (item.img ? imgTag(item.img, '照片') : '') +
+        (item.img && !item.aiImg ? imgTag(item.img, '照片') : '') +
         '<div class="item-btns">' +
             '<button data-act="card" data-i="' + i + '">📥 戰績卡</button>' +
             (item.id ? '<button class="btn-ghost" data-act="edit" data-i="' + i + '">✏️ 編輯</button>' : '') +
@@ -1045,7 +1073,7 @@ function openCard(item, btn) {
     btn.disabled = true;
     btn.innerText = "測量中...";
 
-    var srcId = item.aiImg || item.img || '';
+    var srcId = (item._showPhoto && item.img) ? item.img : (item.aiImg || item.img || '');
     var getBg;
     if (/^data:image\//.test(srcId)) getBg = Promise.resolve(srcId);
     else if (srcId && !/^https?:/.test(srcId)) {
