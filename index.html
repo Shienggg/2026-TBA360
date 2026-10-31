@@ -263,7 +263,7 @@ input:disabled { opacity: .45; }
 <body>
 
 <div class="banner">
-    <div class="version-tag">v39.0 // POWER SCAN</div>
+    <div class="version-tag">v40.1 // POWER SCAN</div>
     <div class="banner-text">TBA360 戰情室</div>
 </div>
 
@@ -393,18 +393,19 @@ var GOAL_DATE = new Date(2026, 10, 13);
 // 從 START_DATE 起算，起始戰鬥力 START_CP
 // 修行值 = 卡路里 + 爬升公尺（沒有卡路里時用 分鐘×8 估算）
 //        + 極限突破 BREAK_XP（騎車 ≥100km、跑步 ≥21km、或任何運動 ≥180 分鐘）
-//        + 傳說突破 LEGEND_XP（單趟騎車 ≥300km，例如一日北高）
-// 戰鬥力 = START_CP × GROWTH ^ (累積修行值 / 1000)
-// GROWTH 設 null 時自動校準：以 CALIB_TIME 前的紀錄為準，讓「10 天特訓 PLAN_XP + 北高本身 FINALE_XP」
-// 之後剛好來到 CALIB_TARGET——也就是騎完北高的那一刻，晉升【北高傳說】
-var START_DATE = '2026-03-01';
+//        + 傳說突破（單趟騎車 ≥300km，例如一日北高；獎勵大小由校準決定）
+// 戰鬥力 = START_CP × 係數 ^ (累積修行值 / 1000)
+// 自動校準兩個點：
+//   1. CALIB_TIME 這一刻的戰鬥力 = CALIB_NOW
+//   2. 之後照賽前訓練 PLAN_XP 再騎完北高，戰鬥力 = CALIB_FINAL（晉升【北高傳說】）
+var START_DATE = '2026-01-01';
 var START_CP = 5;
 var BREAK_XP = 5000;
-var LEGEND_XP = 15000;
 var CALIB_TIME = '2026-10-31 23:59';
-var PLAN_XP = 2 * (2800 + 600 + BREAK_XP) + 6 * 500;     // 2 次百公里 + 6 次一般訓練
-var FINALE_XP = 9000 + 1500 + BREAK_XP + LEGEND_XP;       // 北高：約 9,000 大卡、1,500m 爬升
-var CALIB_TARGET = 1.5e8;
+var CALIB_NOW = 3000000;
+var CALIB_FINAL = 1.5e8;
+var PLAN_XP = 1 * (2800 + 600 + BREAK_XP) + 3 * 500;     // 賽前預估：1 次百公里 + 3 次一般訓練
+var FINALE_BASE_XP = 9000 + 1500 + BREAK_XP;              // 北高本身：約 9,000 大卡、1,500m 爬升
 var GROWTH = null;   // 想固定係數就填數字
 
 // 稱號：戰鬥力每升一個數量級進化一次 [門檻（未滿）, 稱號, 氣場顏色]
@@ -479,21 +480,28 @@ function isBreak(item) {
     return (/騎行/.test(t) && d >= 100) || (/跑步/.test(t) && d >= 21) || (item.type !== '🛌 休息' && m >= 180);
 }
 function xpOf(item) {
+    return xpBase(item) + (isLegend(item) ? curLegendXP : 0);
+}
+// 不含傳說突破的修行值（校準用）
+function xpBase(item) {
     if (item.type === '🛌 休息' || (item.date || '') < START_DATE) return 0;
     var cal = num(item.cal) || num(item.time) * 8;
-    return cal + num(item.elev) + (isBreak(item) ? BREAK_XP : 0) + (isLegend(item) ? LEGEND_XP : 0);
+    return cal + num(item.elev) + (isBreak(item) ? BREAK_XP : 0);
 }
 function tkey(item) { return (item.date || '') + ' ' + (item.start || '00:00'); }
 
-var curG = 1;
+var curG = 1, curLegendXP = 5000;
 // 依時間順序累加修行值，算出每筆運動前後的戰鬥力
 function computeCP(list) {
     var sorted = list.slice().sort(function (a, b) { return tkey(a) < tkey(b) ? -1 : tkey(a) > tkey(b) ? 1 : 0; });
     var histXP = 0;
-    sorted.forEach(function (it) { if (tkey(it) <= CALIB_TIME) histXP += xpOf(it); });
-    // 自動校準：START_CP × G^((歷史 + 特訓 + 北高) / 1000) = CALIB_TARGET
-    curG = GROWTH || Math.exp(Math.log(CALIB_TARGET / START_CP) / ((histXP + PLAN_XP + FINALE_XP) / 1000));
-    var lnG = Math.log(curG), acc = 0;
+    sorted.forEach(function (it) { if (tkey(it) <= CALIB_TIME) histXP += xpBase(it); });
+    // 校準 1：START_CP × G^(歷史/1000) = CALIB_NOW
+    curG = GROWTH || (histXP >= 1000 ? Math.exp(Math.log(CALIB_NOW / START_CP) / (histXP / 1000)) : 1.3);
+    var lnG = Math.log(curG);
+    // 校準 2：CALIB_NOW × G^((特訓 + 北高 + 傳說突破)/1000) = CALIB_FINAL → 解出傳說突破的獎勵
+    curLegendXP = Math.max(5000, 1000 * (Math.log(CALIB_FINAL / CALIB_NOW) / lnG) - PLAN_XP - FINALE_BASE_XP);
+    var acc = 0;
     sorted.forEach(function (it) {
         var xp = xpOf(it);
         it._xp = xp;
