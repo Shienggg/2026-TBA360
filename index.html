@@ -881,7 +881,7 @@ function onListClick(e) {
     var act = b.dataset.act;
     if (act === 'card') openCard(item, b);
     if (act === 'edit') openEdit(item);
-    if (act === 'swap') { item._showPhoto = !item._showPhoto; $('list').innerHTML = LOGS.map(itemHtml).join(''); }
+    if (act === 'swap') { item._showAI = !item._showAI; $('list').innerHTML = LOGS.map(itemHtml).join(''); }
     if (act === 'feel') toggleFeel(i, true);
     if (act === 'feel-cancel') toggleFeel(i, false);
     if (act === 'feel-go') genWithFeel(item, i, b);
@@ -966,8 +966,9 @@ function itemHtml(item, i) {
     var multi = item._multi && item._multi > 1.0005 ? ' ×' + item._multi.toFixed(2) : '';
 
     var ai = '';
-    if (item.aiImg) ai = '<div class="pic">' + imgTag(item._showPhoto && item.img ? item.img : item.aiImg, '戰績圖') +
-        (item.img ? '<button class="pic-swap" data-act="swap" data-i="' + i + '">' + (item._showPhoto ? '🎨 看 AI 圖' : '📷 看原照片') + '</button>' : '') + '</div>';
+    // 有原照片時預設顯示原照片，可切換看 AI 圖
+    if (item.aiImg) ai = '<div class="pic">' + imgTag(item.img && !item._showAI ? item.img : item.aiImg, '戰績圖') +
+        (item.img ? '<button class="pic-swap" data-act="swap" data-i="' + i + '">' + (item._showAI ? '📷 看原照片' : '🎨 看 AI 圖') + '</button>' : '') + '</div>';
     else if (isPending(item)) ai = '<div class="ai-wait">// 能量集中中… AI 繪製中</div>';
     else if (item.aiStatus === 'fail') ai = '<div class="ai-wait ai-fail">AI 生圖失敗' +
         (item.aiErr ? '<small>' + esc(item.aiErr.slice(0, 90)) + '</small>' : '') + '</div>';
@@ -1067,7 +1068,7 @@ function openCard(item, btn) {
     btn.disabled = true;
     btn.innerText = "測量中...";
 
-    var srcId = (item._showPhoto && item.img) ? item.img : (item.aiImg || item.img || '');
+    var srcId = (item.img && !item._showAI) ? item.img : (item.aiImg || item.img || '');
     var getBg;
     if (/^data:image\//.test(srcId)) getBg = Promise.resolve(srcId);
     else if (srcId && !/^https?:/.test(srcId)) {
