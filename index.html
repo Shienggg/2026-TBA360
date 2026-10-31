@@ -268,7 +268,7 @@ input:disabled { opacity: .45; }
 <body>
 
 <div class="banner">
-    <div class="version-tag">v41.0 // POWER SCAN</div>
+    <div class="version-tag">v42.0 // POWER SCAN</div>
     <div class="banner-text">TBA360 戰情室</div>
 </div>
 
@@ -414,21 +414,15 @@ var PLAN_XP = 1 * (2800 + 600 + BREAK_XP) + 3 * 500;     // 賽前預估：1 次
 var FINALE_BASE_XP = 9000 + 1500 + BREAK_XP;              // 北高本身：約 9,000 大卡、1,500m 爬升
 var GROWTH = null;   // 想固定係數就填數字
 
-// 稱號：戰鬥力每升一個數量級進化一次 [門檻（未滿）, 稱號, 氣場顏色]
+// 等級：戰鬥力每升一個數量級進一階（共 12 階）[門檻（未滿）, 氣場顏色]
+// 每一階的稱號由 AI 生成（探測器下方的 🎲 可以換一個）
 var TITLES = [
-    [1e2, '鐵馬新兵', '#9fe8ff'],
-    [1e3, '河濱巡航者', '#9fe8ff'],
-    [1e4, '風阻破壞者', '#3dff8b'],
-    [1e5, '爬坡惡魔', '#3dff8b'],
-    [1e6, '公路霸主', '#ffe14d'],
-    [1e7, '縱貫線戰神', '#ffe14d'],
-    [1e8, '北高前夜・覺醒者', '#ff9d00'],
-    [1e9, '北高傳說', '#ff9d00'],
-    [1e10, '環島霸王', '#ff3b3b'],
-    [1e11, '銀河踩踏者', '#ff3b3b'],
-    [1e12, '超越維度的鐵腿', '#d070ff'],
-    [Infinity, '⚠ 測量不能・神域', '#ffffff']
+    [1e2, '#9fe8ff'], [1e3, '#9fe8ff'], [1e4, '#3dff8b'], [1e5, '#3dff8b'],
+    [1e6, '#ffe14d'], [1e7, '#ffe14d'], [1e8, '#ff9d00'], [1e9, '#ff9d00'],
+    [1e10, '#ff3b3b'], [1e11, '#ff3b3b'], [1e12, '#d070ff'], [Infinity, '#ffffff']
 ];
+function stageName(ti) { return '第 ' + (ti + 1) + ' 階'; }
+function stageLabel(ti) { return TITLE_AI[ti] ? TITLE_AI[ti].title : stageName(ti); }
 // 單次運動的等級（戰績卡）：依修行值 [門檻（未滿）, 名稱, 顏色]
 var ACT_TIERS = [[300, '熱身', '#9fe8ff'], [600, '認真', '#3dff8b'], [1200, '全力', '#ffe14d'], [2500, '爆發', '#ff9d00'], [Infinity, '極限突破', '#ff3b3b']];
 // ▲ 設定區 ▲
@@ -586,13 +580,13 @@ function scanTo(target, withSound, from) {
     }
     cancelAnimationFrame(scanRaf);
     var ti = titleIndex(target), top = ti === TITLES.length - 1;
-    sc.style.setProperty('--aura', TITLES[ti][2]);
+    sc.style.setProperty('--aura', TITLES[ti][1]);
     var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     var finish = function () {
         setCPText(target.toLocaleString());
         sc.className = 'box scanner locked' + (top ? ' over' : '');
         $('scanState').innerText = top ? 'OVERLOAD' : 'LOCKED';
-        $('cpTier').innerText = '【' + TITLES[ti][1] + '】';
+        $('cpTier').innerText = '【' + stageName(ti) + ' / 12】';
         showEpithet(ti);
         if (withSound && audioCtx) { beep(1320, .08, .05); setTimeout(function () { beep(1760, .18, .05); }, 90); }
         shownCP = target;
@@ -641,7 +635,7 @@ function askTitle(ti, cb) {
     var recent = LOGS.slice(0, 3).map(function (x) {
         return { type: x.type, dist: x.dist, words: x.feel || x.note || '' };
     });
-    post({ action: 'title', tier: ti, base: TITLES[ti][1], cp: curCP, recent: recent })
+    post({ action: 'title', tier: ti, base: stageName(ti), cp: curCP, recent: recent })
         .then(function (d) {
             if (!d.ok || !d.title) return;
             TITLE_AI[ti] = d.title;
@@ -658,7 +652,7 @@ function retitle() {
     var ti = titleIndex(curCP), btn = $('btnRetitle');
     btn.disabled = true;
     btn.innerText = '🎲 AI 命名中…';
-    post({ action: 'retitle', pass: pass, tier: ti, base: TITLES[ti][1], cp: curCP,
+    post({ action: 'retitle', pass: pass, tier: ti, base: stageName(ti), cp: curCP,
            recent: LOGS.slice(0, 3).map(function (x) { return { type: x.type, dist: x.dist, words: x.feel || x.note || '' }; }) })
         .then(function (d) {
             if (d.err === '密碼錯誤') { sessionPass = ''; alert('❌ 密碼錯誤'); return; }
@@ -704,14 +698,14 @@ function fanfare() {
 function showEvo(from, to) {
     var oldT = titleIndex(from), newT = titleIndex(to), up = newT > oldT;
     var m = $('evoModal');
-    m.style.setProperty('--aura', TITLES[newT][2]);
+    m.style.setProperty('--aura', TITLES[newT][1]);
     $('evoFrom').innerText = from.toLocaleString();
     $('evoGain').innerText = '+' + (to - from).toLocaleString() + '（×' + fmtMulti(to / from) + '）';
     $('evoTitleWrap').style.display = up ? '' : 'none';
     if (up) {
-        $('evoOld').innerText = '【' + TITLES[oldT][1] + '】';
-        $('evoNew').innerText = '【' + TITLES[newT][1] + '】';
-        $('evoNew').style.color = TITLES[newT][2];
+        $('evoOld').innerText = '【' + stageLabel(oldT) + '】';
+        $('evoNew').innerText = '【' + stageName(newT) + '】';
+        $('evoNew').style.color = TITLES[newT][1];
         $('evoEpithet').innerHTML = TITLE_AI[newT] ? epithetHtml(TITLE_AI[newT]) : '<small style="color:var(--muted)">AI 正在為你命名…</small>';
         askTitle(newT, function (t) { $('evoEpithet').innerHTML = epithetHtml(t); });
     }
@@ -1233,7 +1227,7 @@ function drawCard(item, bg) {
     // 底部
     x.fillStyle = HUD; x.fillRect(0, H - 10, W, 10);
     x.font = '28px ' + MONO;
-    x.fillText('【' + TITLES[titleIndex(item._cp || START_CP)][1] + '】', 50, H - 36);
+    x.fillText('【' + stageLabel(titleIndex(item._cp || START_CP)) + '】', 50, H - 36);
     x.textAlign = 'right'; x.fillStyle = '#ff9d00';
     x.fillText('GOAL // ' + daysLeft() + ' DAYS LEFT', W - 50, H - 36);
     x.textAlign = 'left';
