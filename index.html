@@ -78,11 +78,6 @@ body::after {
 
 /* ---------- 戰鬥力探測器 ---------- */
 .scanner { cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent; }
-.scanner.t1 { --aura: #9fe8ff; }
-.scanner.t2 { --aura: #3dff8b; }
-.scanner.t3 { --aura: #ffe14d; }
-.scanner.t4 { --aura: #ff9d00; }
-.scanner.t5 { --aura: #ff3b3b; }
 
 .scan-head { display: flex; justify-content: space-between; font-family: var(--mono); font-size: .85rem; color: var(--hud); letter-spacing: 2px; }
 #scanState { color: var(--aura); }
@@ -116,7 +111,7 @@ body::after {
 .cp-tier { position: relative; font-family: var(--mono); letter-spacing: 3px; color: var(--aura); font-size: .95rem; }
 .scanning .cp-val { color: var(--hud); text-shadow: 0 0 8px var(--hud); animation: jitter .09s infinite; }
 .locked .cp-val { animation: lockflash .6s ease-out; }
-.t5:not(.scanning) .cp-val { animation: glitch 2.4s infinite; }
+.over:not(.scanning) .cp-val { animation: glitch 2.4s infinite; }
 
 .scan-bar {
     position: absolute; left: 0; right: 0; top: 0; height: 3px; pointer-events: none; opacity: 0;
@@ -146,9 +141,6 @@ body::after {
 .card { background: rgba(0,0,0,.45); padding: 10px; border: 1px solid var(--hud-faint); }
 .val { font-family: var(--digit); font-weight: 700; font-size: 1.15rem; color: var(--hud); }
 .lbl { font-family: var(--mono); font-size: .78rem; color: var(--muted); margin-top: 3px; }
-.status-row { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--hud-faint); display: flex; justify-content: space-around; }
-.status-val { font-family: var(--digit); font-size: 1.35rem; font-weight: 700; color: #fff; }
-.status-lbl { font-family: var(--mono); font-size: .78rem; color: var(--muted); margin-top: 3px; }
 .lv-row { display: flex; justify-content: space-between; margin-top: 16px; font-family: var(--mono); color: var(--hud); letter-spacing: 1px; }
 .days { color: var(--energy); }
 .xp-bg { width: 100%; height: 6px; background: rgba(61,255,139,.12); margin-top: 6px; overflow: hidden; }
@@ -189,10 +181,6 @@ button:disabled { background: #3a3a3a; color: #888; }
 .item-stats { font-family: var(--digit); color: var(--hud); font-size: .85rem; font-weight: 700; }
 .item-gain { font-family: var(--digit); color: var(--energy); font-size: .85rem; font-weight: 700; margin-left: 8px; }
 .item-break { font-family: var(--mono); color: #120800; background: var(--danger); font-size: .75rem; padding: 1px 6px; margin-left: 8px; animation: blink 1s infinite; }
-.goal-row { display: flex; justify-content: space-between; margin-top: 14px; font-family: var(--mono); font-size: .85rem; color: var(--muted); }
-.goal-row b { color: var(--energy); font-weight: normal; }
-.goal-bg { width: 100%; height: 6px; background: rgba(255,157,0,.12); margin-top: 6px; overflow: hidden; }
-.goal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--energy), var(--danger)); box-shadow: 0 0 10px var(--energy); transition: width .8s; }
 .item-note { color: var(--text); margin-top: 5px; font-size: .95rem; }
 .item img { width: 100%; margin-top: 10px; border: 1px solid var(--hud-faint); display: block; }
 .ai-wait {
@@ -222,6 +210,51 @@ button:disabled { background: #3a3a3a; color: #888; }
 #cardModal img { max-width: 100%; max-height: 68vh; border: 1px solid var(--hud); box-shadow: 0 0 24px rgba(61,255,139,.4); }
 .modal-btns { display: flex; gap: 10px; width: 100%; max-width: 400px; }
 
+/* ---------- AI 稱號 ---------- */
+.cp-epithet { position: relative; margin-top: 6px; color: var(--text); font-size: .95rem; line-height: 1.5; }
+.cp-epithet b { color: var(--aura); text-shadow: 0 0 8px var(--aura); }
+.cp-epithet small { display: block; color: var(--muted); font-size: .8rem; }
+
+/* ---------- 進化畫面 ---------- */
+.evo { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.97); overflow: hidden; --aura: #3dff8b; }
+.evo.open { display: flex; animation: shake .45s 2; }
+.evo.open::before { content: ''; position: absolute; inset: 0; background: #fff; pointer-events: none; animation: flash .7s ease-out forwards; }
+.evo-burst { position: absolute; left: 50%; top: 45%; width: 160vmax; height: 160vmax; margin: -80vmax 0 0 -80vmax; pointer-events: none;
+    background: radial-gradient(circle, var(--aura) 0%, transparent 45%); opacity: .3; animation: burst 1.6s ease-out infinite; }
+.evo-rays { position: absolute; left: 50%; top: 45%; width: 200vmax; height: 200vmax; margin: -100vmax 0 0 -100vmax; pointer-events: none; opacity: .18;
+    background: repeating-conic-gradient(var(--aura) 0 4deg, transparent 4deg 18deg); animation: spin 12s linear infinite; }
+.evo-box { position: relative; text-align: center; width: 90%; max-width: 440px; }
+.evo-head { font-family: var(--mono); letter-spacing: 6px; color: var(--aura); font-size: 1.15rem; text-shadow: 0 0 12px var(--aura); animation: blink .45s steps(2) 8; }
+.evo-from { font-family: var(--digit); color: var(--muted); font-size: 1.2rem; text-decoration: line-through; margin-top: 20px; }
+.evo-arrow { color: var(--aura); letter-spacing: 8px; margin: 6px 0; animation: blink .6s infinite; }
+.evo-to { font-family: var(--digit); font-weight: 900; color: var(--aura); line-height: 1.15; text-shadow: 0 0 14px var(--aura), 0 0 44px var(--aura); font-variant-numeric: tabular-nums; }
+.evo-gain { font-family: var(--digit); color: var(--energy); margin-top: 8px; font-size: 1rem; }
+.evo-label { margin-top: 26px; font-family: var(--mono); letter-spacing: 10px; color: #fff; text-shadow: 0 0 10px #fff; }
+.evo-old { color: var(--muted); text-decoration: line-through; margin-top: 10px; }
+.evo-new { font-size: 1.9rem; font-weight: 900; margin-top: 4px; text-shadow: 0 0 18px currentColor; animation: pop .8s cubic-bezier(.2,1.7,.4,1) 1.2s both; }
+.evo-epithet { margin-top: 10px; color: var(--text); font-size: 1rem; line-height: 1.6; min-height: 1.6em; animation: pop .6s ease-out 1.8s both; }
+.evo-epithet b { color: var(--aura); font-size: 1.15rem; }
+.evo-box button { margin-top: 26px; }
+@keyframes flash { 0% { opacity: .95; } 100% { opacity: 0; } }
+@keyframes burst { 0% { transform: scale(.25); opacity: .65; } 100% { transform: scale(1.3); opacity: 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pop { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); } 60% { transform: translate(-4px, -2px); } 80% { transform: translate(3px, 4px); } }
+
+/* ---------- 編輯彈窗 ---------- */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: none; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 24px 0 40px; z-index: 98; }
+.modal.open { display: flex; }
+.modal-box { width: 92%; max-width: 480px; margin: 0; }
+.e-lbl { display: block; font-family: var(--mono); font-size: .78rem; color: var(--muted); margin-top: 12px; letter-spacing: 1px; }
+.e-lbl + input, .e-lbl + select, .e-lbl + textarea { margin-top: 4px; }
+.e-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+#e_feel { min-height: 90px; }
+.btn-danger { background: rgba(255,59,59,.1); color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); font-size: .9rem; padding: 12px; }
+.sync-bar .item-btns { margin-top: 10px; }
+.item-btns button { flex: 1; white-space: nowrap; padding-left: 4px; padding-right: 4px; }
+.item .item-btns button { font-size: .82rem; }
+input:disabled { opacity: .45; }
+
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -230,7 +263,7 @@ button:disabled { background: #3a3a3a; color: #888; }
 <body>
 
 <div class="banner">
-    <div class="version-tag">v37.0 // POWER SCAN</div>
+    <div class="version-tag">v39.0 // POWER SCAN</div>
     <div class="banner-text">TBA360 戰情室</div>
 </div>
 
@@ -241,6 +274,7 @@ button:disabled { background: #3a3a3a; color: #888; }
         <div class="cp-label">POWER LEVEL · 戰鬥力</div>
         <div class="cp-val" id="cpVal">0</div>
         <div class="cp-tier" id="cpTier">—</div>
+        <div class="cp-epithet" id="cpEpithet"></div>
     </div>
     <div class="scan-bar"></div>
 
@@ -251,59 +285,22 @@ button:disabled { background: #3a3a3a; color: #888; }
         <div class="card"><div class="val" id="tCount">0</div><div class="lbl">出擊次數</div></div>
     </div>
 
-    <div class="status-row">
-        <div style="text-align:center">
-            <div class="status-val" id="avgSleep">--</div>
-            <div class="status-lbl">近3日均眠</div>
-        </div>
-        <div style="text-align:center">
-            <div class="status-val" id="avgWeight">--</div>
-            <div class="status-lbl">近3日均重</div>
-        </div>
-    </div>
 
     <div class="lv-row">
         <span id="lvDisp">Lv.1 騎士</span>
         <span class="days" id="daysDisp">---</span>
     </div>
     <div class="xp-bg"><div class="xp-fill" id="xpBar"></div></div>
-    <div class="goal-row"><span>目標 1,000,000</span><b id="goalInfo">--</b></div>
-    <div class="goal-bg"><div class="goal-fill" id="goalBar"></div></div>
     <div class="tap-hint" id="formulaInfo"></div>
     <div class="tap-hint" style="margin-top:4px">[ 點擊探測器重新測量 ]</div>
 </div>
 
-<div class="box">
-    <h3>◤ 寫入紀錄 <small>ADMIN</small></h3>
-    <div class="sync-row">⌚ GARMIN → STRAVA 自動同步：<b id="syncInfo">--</b></div>
-    <input type="date" id="i_date">
-    <div class="grid" style="margin-top:0">
-        <select id="i_type">
-            <option>🚴 騎行</option><option>🚶 快走</option><option>🏃 跑步</option>
-            <option>🏀 打球</option><option>🏋️ 重訓</option><option>🏊 游泳</option>
-            <option>🛌 休息</option><option>🏅 其他</option>
-        </select>
-        <select id="i_knee"><option>🟢舒服</option><option>🟡微酸</option><option>🔴疼痛</option></select>
+<div class="box sync-bar">
+    <div class="sync-row">⌚ GARMIN → STRAVA · 每天 23:00 自動同步 · <b id="syncInfo">--</b></div>
+    <div class="item-btns">
+        <button id="btnSync" class="btn-ghost">🔄 立即同步</button>
+        <button id="btnAdd" class="btn-dim">＋ 補登紀錄</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
-        <input type="number" id="i_dist" placeholder="km" step="0.1">
-        <input type="number" id="i_time" placeholder="min" step="1">
-        <input type="number" id="i_cal" placeholder="cal">
-    </div>
-    <div class="grid">
-        <input type="number" id="i_sleep" placeholder="睡眠">
-        <input type="number" id="i_weight" placeholder="體重" step="0.1">
-    </div>
-    <div style="margin-top:10px;border:1px dashed var(--hud-faint);padding:10px">
-        <label style="color:var(--muted);font-size:0.9rem">📸 照片（選填）</label>
-        <input type="file" id="i_file" accept="image/*" style="margin-top:5px">
-    </div>
-    <textarea id="i_note" placeholder="心得..."></textarea>
-    <label class="check-row"><input type="checkbox" id="i_ai"> 🎨 用心得當感言，送出後直接生圖</label>
-    <input type="password" id="i_pass" class="pass-input" placeholder="請輸入密碼">
-    <button id="btnSave">送出紀錄</button>
-    <button id="btnSync" class="btn-ghost">🔄 立即同步 Garmin / Strava</button>
-    <div class="hint">Garmin 的運動每天 23 點自動匯入，車錶和手錶重複記錄的只留一筆。<br>想要 AI 圖的紀錄，在下方按「🎨 感言生圖」寫下感言，就會照內容生成。<br>睡眠、體重、沒戴錶的運動再用上面的表單補。</div>
 </div>
 
 <div class="box">
@@ -324,6 +321,58 @@ button:disabled { background: #3a3a3a; color: #888; }
     </div>
 </div>
 
+<div id="editModal" class="modal">
+    <div class="box modal-box">
+        <h3 id="e_title">◤ 編輯紀錄</h3>
+        <div id="e_src" class="sync-row"></div>
+        <label class="e-lbl">日期</label>
+        <input type="date" id="e_date">
+        <label class="e-lbl">運動類型</label>
+        <select id="e_type">
+            <option>🚴 騎行</option><option>🚶 快走</option><option>🏃 跑步</option>
+            <option>🏀 打球</option><option>🏋️ 重訓</option><option>🏊 游泳</option>
+            <option>🛌 休息</option><option>🏅 其他</option>
+        </select>
+        <div class="e-grid">
+            <div><label class="e-lbl">里程 km</label><input type="number" id="e_dist" step="0.01"></div>
+            <div><label class="e-lbl">時間 min</label><input type="number" id="e_time" step="1"></div>
+            <div><label class="e-lbl">卡路里</label><input type="number" id="e_cal" step="1"></div>
+        </div>
+        <label class="e-lbl">標題</label>
+        <input type="text" id="e_note" maxlength="200" placeholder="例：北高資格賽">
+        <label class="e-lbl">感言（生圖會照這段畫）</label>
+        <textarea id="e_feel" maxlength="300" placeholder="例：逆風騎到淡水，夕陽超美但大腿快廢了"></textarea>
+        <label class="e-lbl">📸 照片（選填，會取代原本的照片）</label>
+        <input type="file" id="e_file" accept="image/*">
+        <label class="check-row"><input type="checkbox" id="e_ai"> 🎨 存檔後依感言生成戰績圖</label>
+        <input type="password" id="e_pass" class="pass-input" placeholder="管理密碼">
+        <div class="item-btns" style="margin-top:14px">
+            <button id="e_save">💾 儲存</button>
+            <button id="e_cancel" class="btn-dim">取消</button>
+        </div>
+        <button id="e_hide" class="btn-danger">🙈 隱藏這筆紀錄（重複或不想計入時用）</button>
+    </div>
+</div>
+
+<div id="evoModal" class="evo">
+    <div class="evo-rays"></div>
+    <div class="evo-burst"></div>
+    <div class="evo-box">
+        <div class="evo-head">⚡ POWER UP ⚡</div>
+        <div class="evo-from" id="evoFrom"></div>
+        <div class="evo-arrow">▼ ▼ ▼</div>
+        <div class="evo-to" id="evoTo"></div>
+        <div class="evo-gain" id="evoGain"></div>
+        <div id="evoTitleWrap">
+            <div class="evo-label">— 進 化 —</div>
+            <div class="evo-old" id="evoOld"></div>
+            <div class="evo-new" id="evoNew"></div>
+            <div class="evo-epithet" id="evoEpithet"></div>
+        </div>
+        <button id="evoOk">💪 收下這股力量</button>
+    </div>
+</div>
+
 <div id="cardModal">
     <img id="cardImg" alt="戰績卡">
     <div style="font-size:.8rem;color:var(--muted);margin:10px 0">手機也可以長按圖片直接儲存</div>
@@ -337,29 +386,44 @@ button:disabled { background: #3a3a3a; color: #888; }
 <script>
 // ▼ 設定區 ▼（密碼在後端的指令碼屬性 ADMIN_PASS）
 var GAS_URL = "https://script.google.com/macros/s/AKfycbxjbykUNcsRwXiHqNVQ8JjjgDQ2YpDG4CFgiMxrb6mdypln84A3rtHvXy7BoJAwxn9S/exec";
-var KEY = "TBA360_V37";
+var KEY = "TBA360_V38";
 var GOAL_DATE = new Date(2026, 10, 13);
 
 // ── 戰鬥力公式（只用 Strava 會自動帶進來的欄位：卡路里、爬升、距離、時間、類型）──
 // 從 START_DATE 起算，起始戰鬥力 START_CP
 // 修行值 = 卡路里 + 爬升公尺（沒有卡路里時用 分鐘×8 估算）
-//        + 極限突破獎勵 BREAK_XP（騎車 ≥100km、跑步 ≥21km、或任何運動 ≥180 分鐘）
+//        + 極限突破 BREAK_XP（騎車 ≥100km、跑步 ≥21km、或任何運動 ≥180 分鐘）
+//        + 傳說突破 LEGEND_XP（單趟騎車 ≥300km，例如一日北高）
 // 戰鬥力 = START_CP × GROWTH ^ (累積修行值 / 1000)
-// GROWTH 設 null 時自動校準：用 CALIB_TIME 之前的紀錄，算出讓「之後照 PLAN_XP 的訓練量」剛好達到 GOAL_CP 的係數
+// GROWTH 設 null 時自動校準：以 CALIB_TIME 前的紀錄為準，讓「10 天特訓 PLAN_XP + 北高本身 FINALE_XP」
+// 之後剛好來到 CALIB_TARGET——也就是騎完北高的那一刻，晉升【北高傳說】
 var START_DATE = '2026-03-01';
 var START_CP = 5;
 var BREAK_XP = 5000;
-var GOAL_CP = 1000000;
+var LEGEND_XP = 15000;
 var CALIB_TIME = '2026-10-31 23:59';
-// 10 天訓練計畫：2 次百公里（各 2,800 大卡 + 600m 爬升 + 突破獎勵）+ 6 次一般訓練（各 500 大卡）
-var PLAN_XP = 2 * (2800 + 600 + BREAK_XP) + 6 * 500;
-var GROWTH = null;   // 想固定係數就填數字，例如 1.13
+var PLAN_XP = 2 * (2800 + 600 + BREAK_XP) + 6 * 500;     // 2 次百公里 + 6 次一般訓練
+var FINALE_XP = 9000 + 1500 + BREAK_XP + LEGEND_XP;       // 北高：約 9,000 大卡、1,500m 爬升
+var CALIB_TARGET = 1.5e8;
+var GROWTH = null;   // 想固定係數就填數字
 
-// 總戰鬥力的等級門檻與稱號
-var TOTAL_TIERS = [[1000, '一般市民'], [30000, '鍛鍊中'], [150000, '強者'], [1000000, '超越極限'], [Infinity, '⚠ 規格外']];
-// 單次運動的修行值等級（戰績卡）
-var ACT_TIERS = [[300, '熱身'], [600, '認真'], [1200, '全力'], [2500, '爆發'], [Infinity, '極限突破']];
-var TIER_COLORS = ['#9fe8ff', '#3dff8b', '#ffe14d', '#ff9d00', '#ff3b3b'];
+// 稱號：戰鬥力每升一個數量級進化一次 [門檻（未滿）, 稱號, 氣場顏色]
+var TITLES = [
+    [1e2, '鐵馬新兵', '#9fe8ff'],
+    [1e3, '河濱巡航者', '#9fe8ff'],
+    [1e4, '風阻破壞者', '#3dff8b'],
+    [1e5, '爬坡惡魔', '#3dff8b'],
+    [1e6, '公路霸主', '#ffe14d'],
+    [1e7, '縱貫線戰神', '#ffe14d'],
+    [1e8, '北高前夜・覺醒者', '#ff9d00'],
+    [1e9, '北高傳說', '#ff9d00'],
+    [1e10, '環島霸王', '#ff3b3b'],
+    [1e11, '銀河踩踏者', '#ff3b3b'],
+    [1e12, '超越維度的鐵腿', '#d070ff'],
+    [Infinity, '⚠ 測量不能・神域', '#ffffff']
+];
+// 單次運動的等級（戰績卡）：依修行值 [門檻（未滿）, 名稱, 顏色]
+var ACT_TIERS = [[300, '熱身', '#9fe8ff'], [600, '認真', '#3dff8b'], [1200, '全力', '#ffe14d'], [2500, '爆發', '#ff9d00'], [Infinity, '極限突破', '#ff3b3b']];
 // ▲ 設定區 ▲
 
 var LOGS = [];
@@ -368,20 +432,24 @@ var pollTimer = null, scanRaf = null, audioCtx = null;
 var cardBlob = null, cardName = '';
 
 window.onload = function () {
-    $('i_date').value = localDate();
     $('daysDisp').innerText = daysLeft() + " DAYS LEFT";
 
     loadLocal();
     loadCloud();
 
     $('scanner').onclick = function () { scanTo(curCP, true); };
-    $('btnSave').onclick = saveData;
     $('btnSync').onclick = syncNow;
+    $('btnAdd').onclick = function () { openEdit(null); };
+    $('e_save').onclick = saveEdit;
+    $('e_cancel').onclick = closeEdit;
+    $('e_hide').onclick = hideRecord;
+    $('editModal').onclick = function (e) { if (e.target === this) closeEdit(); };
     $('btnMsg').onclick = sendMsg;
     $('list').onclick = onListClick;
     $('btnShare').onclick = shareCard;
     $('btnDl').onclick = downloadCard;
     $('btnClose').onclick = closeCard;
+    $('evoOk').onclick = function () { $('evoModal').classList.remove('open'); };
 };
 
 /* ---------- 小工具 ---------- */
@@ -401,10 +469,11 @@ function daysLeft() {
     return d > 0 ? d : 0;
 }
 function num(v) { return parseFloat(v) || 0; }
-function isPending(item) { return item.aiStatus === 'pending' || /^retry/.test(item.aiStatus || ''); }
+function isPending(item) { return item.aiStatus === 'pending'; }
 function tierIndex(v, tiers) { for (var i = 0; i < tiers.length; i++) if (v < tiers[i][0]) return i; return tiers.length - 1; }
 
 /* ---------- 戰鬥力公式 ---------- */
+function isLegend(item) { return /騎行/.test(item.type || '') && num(item.dist) >= 300; }
 function isBreak(item) {
     var t = item.type || '', d = num(item.dist), m = num(item.time);
     return (/騎行/.test(t) && d >= 100) || (/跑步/.test(t) && d >= 21) || (item.type !== '🛌 休息' && m >= 180);
@@ -412,7 +481,7 @@ function isBreak(item) {
 function xpOf(item) {
     if (item.type === '🛌 休息' || (item.date || '') < START_DATE) return 0;
     var cal = num(item.cal) || num(item.time) * 8;
-    return cal + num(item.elev) + (isBreak(item) ? BREAK_XP : 0);
+    return cal + num(item.elev) + (isBreak(item) ? BREAK_XP : 0) + (isLegend(item) ? LEGEND_XP : 0);
 }
 function tkey(item) { return (item.date || '') + ' ' + (item.start || '00:00'); }
 
@@ -422,8 +491,8 @@ function computeCP(list) {
     var sorted = list.slice().sort(function (a, b) { return tkey(a) < tkey(b) ? -1 : tkey(a) > tkey(b) ? 1 : 0; });
     var histXP = 0;
     sorted.forEach(function (it) { if (tkey(it) <= CALIB_TIME) histXP += xpOf(it); });
-    // 自動校準：START_CP × G^((歷史 + 計畫) / 1000) = GOAL_CP
-    curG = GROWTH || Math.exp(Math.log(GOAL_CP / START_CP) / ((histXP + PLAN_XP) / 1000));
+    // 自動校準：START_CP × G^((歷史 + 特訓 + 北高) / 1000) = CALIB_TARGET
+    curG = GROWTH || Math.exp(Math.log(CALIB_TARGET / START_CP) / ((histXP + PLAN_XP + FINALE_XP) / 1000));
     var lnG = Math.log(curG), acc = 0;
     sorted.forEach(function (it) {
         var xp = xpOf(it);
@@ -439,7 +508,13 @@ function computeCP(list) {
     return Math.floor(START_CP * Math.exp(acc));
 }
 function beforeStart(it) { return (it.date || '') < START_DATE; }
-function actTier(item) { return item._break ? 4 : tierIndex(item._xp || 0, ACT_TIERS); }
+function actInfo(item) {
+    if (isLegend(item)) return { label: '傳說突破', color: '#d070ff' };
+    var t = item._break ? ACT_TIERS[4] : ACT_TIERS[tierIndex(item._xp || 0, ACT_TIERS)];
+    return { label: t[1], color: t[2] };
+}
+function titleIndex(cp) { return tierIndex(cp, TITLES); }
+function fmtMulti(m) { return m < 100 ? m.toFixed(2) : Math.round(m).toLocaleString(); }
 
 // 依可用寬度自動縮放大數字
 function setCPText(text) {
@@ -460,10 +535,12 @@ function withTimeout(p, ms) {
         setTimeout(function () { rej(new Error('等候逾時，紀錄可能已經存進去了，稍後重新整理看看')); }, ms);
     })]);
 }
+// 密碼只記在這次開著的頁面裡，不存檔；第一次用時才詢問
+var sessionPass = '';
 function getPass() {
-    var p = $('i_pass').value;
-    if (!p) { alert("請先在密碼欄輸入密碼"); $('i_pass').focus(); }
-    return p;
+    if (sessionPass) return sessionPass;
+    var p = prompt("請輸入管理密碼");
+    return p || '';
 }
 function imgSrc(v) {
     v = String(v || '');
@@ -487,46 +564,126 @@ function beep(freq, dur, vol) {
     o.start(); o.stop(audioCtx.currentTime + dur);
 }
 
-function scanTo(target, withSound) {
+function scanTo(target, withSound, from) {
     var sc = $('scanner');
     if (withSound) {
         try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) {}
     }
     cancelAnimationFrame(scanRaf);
-    var ti = tierIndex(target, TOTAL_TIERS);
+    var ti = titleIndex(target), top = ti === TITLES.length - 1;
+    sc.style.setProperty('--aura', TITLES[ti][2]);
     var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     var finish = function () {
         setCPText(target.toLocaleString());
-        sc.className = 'box scanner t' + (ti + 1) + ' locked';
-        $('scanState').innerText = ti === 4 ? 'OVERLOAD' : 'LOCKED';
-        $('cpTier').innerText = '【' + TOTAL_TIERS[ti][1] + '】';
+        sc.className = 'box scanner locked' + (top ? ' over' : '');
+        $('scanState').innerText = top ? 'OVERLOAD' : 'LOCKED';
+        $('cpTier').innerText = '【' + TITLES[ti][1] + '】';
+        showEpithet(ti);
         if (withSound && audioCtx) { beep(1320, .08, .05); setTimeout(function () { beep(1760, .18, .05); }, 90); }
         shownCP = target;
     };
     if (reduce) { finish(); return; }
 
-    sc.className = 'box scanner t' + (ti + 1) + ' scanning';
+    sc.className = 'box scanner scanning';
     $('scanState').innerText = 'SCANNING';
     $('cpTier').innerText = '測量中…';
-    var digits = Math.max(1, String(target).length), t0 = performance.now(), dur = 1700, lastBeep = 0;
+    var climb = from != null && from < target;   // 有上次的數值：從那裡往上衝
+    var digits = Math.max(1, String(target).length), t0 = performance.now(), dur = climb ? 2400 : 1700, lastBeep = 0;
     var step = function (now) {
         var t = now - t0;
         if (t >= dur) { finish(); return; }
         var shown;
-        if (t < dur * 0.55) {
-            // 前段：亂數狂跳
-            shown = Math.floor(Math.random() * Math.pow(10, digits));
-        } else {
-            // 後段：逼近真實數值
-            var k = (t - dur * 0.55) / (dur * 0.45);
+        if (climb) {
+            var k = t / dur;
             k = 1 - Math.pow(1 - k, 3);
-            shown = Math.floor(target * k + Math.random() * target * (1 - k) * 0.3);
+            shown = Math.floor(from * Math.pow(target / from, k));   // 用倍率插值，看起來像指數暴衝
+        } else if (t < dur * 0.55) {
+            shown = Math.floor(Math.random() * Math.pow(10, digits));   // 前段：亂數狂跳
+        } else {
+            var k2 = (t - dur * 0.55) / (dur * 0.45);
+            k2 = 1 - Math.pow(1 - k2, 3);
+            shown = Math.floor(target * k2 + Math.random() * target * (1 - k2) * 0.3);
         }
         setCPText(shown.toLocaleString());
         if (withSound && t - lastBeep > 110) { beep(880 + Math.random() * 600, .03); lastBeep = t; }
         scanRaf = requestAnimationFrame(step);
     };
     scanRaf = requestAnimationFrame(step);
+}
+
+/* ---------- AI 稱號 ---------- */
+var TITLE_AI = {}, titleAsked = {};
+function epithetHtml(t) { return t ? '<b>「' + esc(t.title) + '」</b>' + (t.line ? '<small>' + esc(t.line) + '</small>' : '') : ''; }
+function showEpithet(ti) {
+    $('cpEpithet').innerHTML = epithetHtml(TITLE_AI[ti]);
+    if (!TITLE_AI[ti]) askTitle(ti);
+}
+// 這一階還沒有 AI 稱號時，請後端生成（每一階只會生成一次，所有人看到的都一樣）
+function askTitle(ti, cb) {
+    if (TITLE_AI[ti]) { if (cb) cb(TITLE_AI[ti]); return; }
+    if (titleAsked[ti]) return;
+    titleAsked[ti] = true;
+    var recent = LOGS.slice(0, 3).map(function (x) {
+        return { type: x.type, dist: x.dist, words: x.feel || x.note || '' };
+    });
+    post({ action: 'title', tier: ti, base: TITLES[ti][1], cp: curCP, recent: recent })
+        .then(function (d) {
+            if (!d.ok || !d.title) return;
+            TITLE_AI[ti] = d.title;
+            if (titleIndex(curCP) === ti) $('cpEpithet').innerHTML = epithetHtml(d.title);
+            if (cb) cb(d.title);
+        })
+        .catch(function () {});
+}
+
+/* ---------- 進化畫面 ---------- */
+var SEEN_KEY = KEY + '_seen';
+function loadSeen() { try { return JSON.parse(localStorage.getItem(SEEN_KEY) || 'null'); } catch (e) { return null; } }
+function saveSeen(cp) { try { localStorage.setItem(SEEN_KEY, JSON.stringify({ cp: cp })); } catch (e) {} }
+
+function checkEvolution() {
+    var seen = loadSeen();
+    if (seen && seen.cp > 0 && curCP > seen.cp) showEvo(seen.cp, curCP);
+    saveSeen(curCP);
+}
+
+function countUp(el, from, to, dur) {
+    var t0 = performance.now();
+    var fit = function (txt) {
+        el.innerText = txt;
+        el.style.fontSize = Math.max(26, Math.min(64, (el.parentElement.clientWidth - 10) / (txt.length * 0.8))) + 'px';
+    };
+    var step = function (now) {
+        var k = Math.min(1, (now - t0) / dur);
+        k = 1 - Math.pow(1 - k, 3);
+        fit(Math.floor(from * Math.pow(to / from, k)).toLocaleString());
+        if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
+
+function fanfare() {
+    if (!audioCtx) return;
+    [523, 659, 784, 1047, 1319].forEach(function (f, i) { setTimeout(function () { beep(f, .14, .05); }, i * 110); });
+}
+
+function showEvo(from, to) {
+    var oldT = titleIndex(from), newT = titleIndex(to), up = newT > oldT;
+    var m = $('evoModal');
+    m.style.setProperty('--aura', TITLES[newT][2]);
+    $('evoFrom').innerText = from.toLocaleString();
+    $('evoGain').innerText = '+' + (to - from).toLocaleString() + '（×' + fmtMulti(to / from) + '）';
+    $('evoTitleWrap').style.display = up ? '' : 'none';
+    if (up) {
+        $('evoOld').innerText = '【' + TITLES[oldT][1] + '】';
+        $('evoNew').innerText = '【' + TITLES[newT][1] + '】';
+        $('evoNew').style.color = TITLES[newT][2];
+        $('evoEpithet').innerHTML = TITLE_AI[newT] ? epithetHtml(TITLE_AI[newT]) : '<small style="color:var(--muted)">AI 正在為你命名…</small>';
+        askTitle(newT, function (t) { $('evoEpithet').innerHTML = epithetHtml(t); });
+    }
+    m.classList.remove('open'); void m.offsetWidth; m.classList.add('open');
+    countUp($('evoTo'), from, to, 2200);
+    fanfare();
 }
 
 /* ---------- 讀取 ---------- */
@@ -544,6 +701,7 @@ function loadCloud() {
             if (d.ok === false) { console.warn(d.err); return; }
             renderMsgs(d.msgs || []);
             $('syncInfo').innerText = d.lastSync ? '上次 ' + d.lastSync : '尚未同步';
+            TITLE_AI = d.titles || {};
             if (d.logs) {
                 try {
                     var slim = d.logs.slice(0, 60).map(function (l) {
@@ -551,7 +709,7 @@ function loadCloud() {
                     });
                     localStorage.setItem(KEY, JSON.stringify(slim));
                 } catch (e) { console.warn("LocalStorage 寫入失敗", e); }
-                render(d.logs);
+                render(d.logs, true);
             }
         })
         .catch(function (e) {
@@ -560,49 +718,91 @@ function loadCloud() {
         });
 }
 
-/* ---------- 手動新增 ---------- */
-function saveData() {
-    var pass = getPass();
-    if (!pass) return;
+/* ---------- 編輯 / 補登彈窗 ---------- */
+var editing = null;   // null = 補登新紀錄；否則是正在編輯的那筆
 
-    var btn = $('btnSave');
-    var wantAI = $('i_ai').checked;
+function openEdit(item) {
+    editing = item;
+    var add = !item;
+    $('e_title').innerText = add ? '◤ 補登紀錄' : '◤ 編輯紀錄';
+    $('e_src').innerText = add ? '沒戴錶的運動用這裡補登' :
+        (item.source === 'strava' ? '⌚ 來自 Strava' + (item.device ? '（' + item.device + '）' : '') + '，日期以 Strava 為準' :
+         item.source === 'legacy' ? '舊系統紀錄' : '手動補登的紀錄');
+    $('e_date').value = add ? localDate() : (item.date || '');
+    $('e_date').disabled = !add && item.source === 'strava';
+    $('e_type').value = add ? '🚴 騎行' : (item.type || '🏅 其他');
+    $('e_dist').value = add ? '' : (item.dist || '');
+    $('e_time').value = add ? '' : (item.time || '');
+    $('e_cal').value = add ? '' : (item.cal || '');
+    $('e_note').value = add ? '' : (item.note || '');
+    $('e_feel').value = add ? '' : (item.feel || '');
+    $('e_file').value = '';
+    $('e_ai').checked = false;
+    $('e_pass').value = sessionPass;
+    $('e_pass').style.display = sessionPass ? 'none' : '';
+    $('e_hide').style.display = add ? 'none' : '';
+    $('e_save').disabled = false; $('e_save').innerText = '💾 儲存';
+    $('editModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEdit() {
+    $('editModal').classList.remove('open');
+    document.body.style.overflow = '';
+    editing = null;
+}
+
+function saveEdit() {
+    var pass = sessionPass || $('e_pass').value;
+    if (!pass) { alert("請輸入管理密碼"); $('e_pass').focus(); return; }
+    var wantAI = $('e_ai').checked;
+    var btn = $('e_save');
     btn.disabled = true;
-    btn.innerText = "準備中...";
+    btn.innerText = "儲存中...";
 
-    var file = $('i_file').files[0];
+    var fields = {
+        date: $('e_date').value, type: $('e_type').value,
+        dist: $('e_dist').value, time: $('e_time').value, cal: $('e_cal').value,
+        note: $('e_note').value.trim(), feel: $('e_feel').value.trim()
+    };
+    var file = $('e_file').files[0];
     var prep = file ? (btn.innerText = "壓縮照片中...", resizeImg(file)) : Promise.resolve("");
 
     prep.then(function (img64) {
-        btn.innerText = wantAI ? "上傳中，AI 繪圖約需 20–40 秒..." : "上傳雲端中...";
-        return withTimeout(post({
-            action: 'log',
-            pass: pass,
-            date: $('i_date').value,
-            type: $('i_type').value,
-            knee: $('i_knee').value,
-            dist: $('i_dist').value,
-            time: $('i_time').value,
-            cal: $('i_cal').value,
-            sleep: $('i_sleep').value,
-            weight: $('i_weight').value,
-            note: $('i_note').value,
-            img: img64,
-            ai: wantAI
-        }), wantAI ? 150000 : 40000);
+        btn.innerText = wantAI ? "儲存並繪圖中，約 20–40 秒..." : "儲存中...";
+        var body = editing
+            ? { action: 'edit', pass: pass, id: editing.id, fields: fields, img: img64, ai: wantAI }
+            : { action: 'log', pass: pass, date: fields.date, type: fields.type, dist: fields.dist, time: fields.time,
+                cal: fields.cal, note: fields.note, feel: fields.feel, img: img64, ai: wantAI };
+        return withTimeout(post(body), wantAI ? 150000 : 40000);
     }).then(function (d) {
+        if (d.err === '密碼錯誤') { alert("❌ 密碼錯誤"); sessionPass = ''; $('e_pass').style.display = ''; return; }
         if (!d.ok) { alert("❌ " + (d.err || "儲存失敗")); return; }
-        var msg = "✅ 紀錄成功";
-        if (wantAI) msg += (d.ai && d.ai.ok) ? "，AI 戰績圖完成！" : "（AI 圖稍後會自動補上）";
-        alert(msg);
-        ['i_note', 'i_file', 'i_pass', 'i_dist', 'i_time', 'i_cal'].forEach(function (id) { $(id).value = ""; });
+        sessionPass = pass;
+        if (wantAI && d.ai && !d.ai.ok) alert("✅ 已儲存，但生圖失敗：" + (d.ai.err || ''));
+        closeEdit();
         loadCloud();
     }).catch(function (e) {
         alert("⚠️ " + e.message);
     }).then(function () {
         btn.disabled = false;
-        btn.innerText = "送出紀錄";
+        btn.innerText = "💾 儲存";
     });
+}
+
+function hideRecord() {
+    if (!editing) return;
+    if (!confirm("確定要隱藏這筆紀錄？隱藏後不會顯示，也不計入戰鬥力（資料仍保留在試算表）。")) return;
+    var pass = sessionPass || $('e_pass').value;
+    if (!pass) { alert("請輸入管理密碼"); $('e_pass').focus(); return; }
+    post({ action: 'edit', pass: pass, id: editing.id, hide: true })
+        .then(function (d) {
+            if (!d.ok) { alert("❌ " + (d.err || "隱藏失敗")); return; }
+            sessionPass = pass;
+            closeEdit();
+            loadCloud();
+        })
+        .catch(function (e) { alert("⚠️ " + e.message); });
 }
 
 function resizeImg(file) {
@@ -624,6 +824,7 @@ function resizeImg(file) {
 
 /* ---------- 同步 / 重新生圖 ---------- */
 function syncNow() {
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume(); } catch (e) {}
     var pass = getPass();
     if (!pass) return;
     var btn = $('btnSync');
@@ -641,7 +842,7 @@ function syncNow() {
             loadCloud();
         })
         .catch(function (e) { alert("⚠️ " + e.message); })
-        .then(function () { btn.disabled = false; btn.innerText = "🔄 立即同步 Garmin / Strava"; });
+        .then(function () { btn.disabled = false; btn.innerText = "🔄 立即同步"; });
 }
 
 function onListClick(e) {
@@ -651,20 +852,21 @@ function onListClick(e) {
     if (!item) return;
     var act = b.dataset.act;
     if (act === 'card') openCard(item, b);
+    if (act === 'edit') openEdit(item);
     if (act === 'feel') toggleFeel(i, true);
     if (act === 'feel-cancel') toggleFeel(i, false);
     if (act === 'feel-go') genWithFeel(item, i, b);
 }
 
-// 感言輸入框（密碼只記在這次開啟的頁面裡，不存檔）
-var sessionPass = '';
+// 感言輸入框
 function toggleFeel(i, open) {
     var box = $('feel-' + i);
     if (!box) return;
     box.style.display = open ? 'block' : 'none';
     if (open) {
         var p = box.querySelector('.feel-pass');
-        if (!p.value) p.value = sessionPass || $('i_pass').value;
+        if (!p.value) p.value = sessionPass;
+        p.style.display = sessionPass ? 'none' : '';
         box.querySelector('textarea').focus();
     }
 }
@@ -672,14 +874,14 @@ function toggleFeel(i, open) {
 function genWithFeel(item, i, btn) {
     var box = $('feel-' + i);
     var feel = box.querySelector('textarea').value.trim();
-    var pass = box.querySelector('.feel-pass').value;
+    var pass = sessionPass || box.querySelector('.feel-pass').value;
     if (!pass) { alert("請輸入密碼"); box.querySelector('.feel-pass').focus(); return; }
     if (!feel && !confirm("沒有寫感言，要用預設情境生圖嗎？")) return;
     btn.disabled = true;
     btn.innerText = "🎨 繪製中，約 20–40 秒...";
     withTimeout(post({ action: 'gen', pass: pass, id: item.id, feel: feel }), 150000)
         .then(function (d) {
-            if (d.err === '密碼錯誤') { alert("❌ 密碼錯誤"); return; }
+            if (d.err === '密碼錯誤') { alert("❌ 密碼錯誤"); sessionPass = ''; box.querySelector('.feel-pass').style.display = ''; return; }
             sessionPass = pass;
             if (!d.ok) alert("❌ 生圖失敗：" + (d.err || ''));
             loadCloud();
@@ -725,7 +927,6 @@ function renderMsgs(msgs) {
 
 function itemHtml(item, i) {
     var info = [];
-    if (item.knee) info.push(esc(item.knee));
     if (item.sleep) info.push('💤' + esc(item.sleep));
     if (item.weight) info.push('⚖️' + esc(item.weight) + 'kg');
     if (item.hr) info.push('❤️' + esc(item.hr) + 'bpm');
@@ -757,18 +958,19 @@ function itemHtml(item, i) {
         '<span><span class="tag">' + esc(item.type) + '</span>' + src + '</span></div>' +
         (info.length ? '<div class="item-info">' + info.join(' | ') + '</div>' : '') +
         (stats || gain ? '<div><span class="item-stats">' + stats + '</span>' + (gain ? '<span class="item-gain">+' + gain.toLocaleString() + ' CP' + multi + '</span>' : '') +
-            (item._break ? '<span class="item-break">⚡極限突破</span>' : '') + + '</div>' : '') +
+            (item._break ? '<span class="item-break">⚡極限突破</span>' : '') + '</div>' : '') +
         (item.note ? '<div class="item-note">' + esc(item.note) + '</div>' : '') +
         (item.feel ? '<div class="item-feel">💬 ' + esc(item.feel) + '</div>' : '') +
         ai +
         (item.img ? imgTag(item.img, '照片') : '') +
         '<div class="item-btns">' +
             '<button data-act="card" data-i="' + i + '">📥 戰績卡</button>' +
-            (item.id ? '<button class="btn-dim" data-act="feel" data-i="' + i + '">🎨 ' + (item.aiImg ? '重新生圖' : '感言生圖') + '</button>' : '') +
+            (item.id ? '<button class="btn-ghost" data-act="edit" data-i="' + i + '">✏️ 編輯</button>' : '') +
+            (item.id ? '<button class="btn-dim" data-act="feel" data-i="' + i + '">' + (item.aiImg ? '🎨 重畫' : '🎨 生圖') + '</button>' : '') +
         '</div>' + feelBox + '</div>';
 }
 
-function render(list) {
+function render(list, fromCloud) {
     // 只顯示一日北高挑戰起算日（START_DATE）之後的紀錄
     LOGS = (list || []).filter(function (x) { return (x.date || '') >= START_DATE; });
     var cDist = 0, cTime = 0, cCal = 0, cCount = 0, anyPending = false;
@@ -787,13 +989,7 @@ function render(list) {
 
     curLv = Math.floor(cCount / 5) + 1;
 
-    // 目標進度（對數尺度：每乘一次倍率前進一樣多）
-    var prog = Math.max(0, Math.min(1, Math.log(curCP / START_CP) / Math.log(GOAL_CP / START_CP)));
-    $('goalBar').style.width = (prog * 100).toFixed(1) + '%';
-    var needXP = Math.max(0, Math.log(GOAL_CP / curCP) / Math.log(curG) * 1000);
-    $('goalInfo').innerText = curCP >= GOAL_CP ? '🎯 目標達成！' : '還差 ×' + (GOAL_CP / curCP).toFixed(1);
-    $('formulaInfo').innerText = '自 ' + START_DATE.slice(5).replace('-', '/') + ' 起算 · 每千修行值 ×' + curG.toFixed(3) +
-        (curCP < GOAL_CP ? ' · 距目標還需修行值 ' + Math.round(needXP).toLocaleString() : '');
+    $('formulaInfo').innerText = '自 ' + START_DATE.slice(5).replace('-', '/') + ' 起算 · 每千修行值 ×' + curG.toFixed(3);
 
     $('list').innerHTML = LOGS.map(itemHtml).join('') || '<div style="color:var(--muted);text-align:center">還沒有紀錄</div>';
 
@@ -804,28 +1000,13 @@ function render(list) {
     $('lvDisp').innerText = "Lv." + curLv + " 騎士";
     $('xpBar').style.width = (cCount % 5) * 20 + "%";
 
-    // 數值有變才重新掃描
-    if (curCP !== shownCP) scanTo(curCP, false);
+    // 數值有變才重新掃描；雲端資料比上次看到的高，就從上次的數值往上衝
+    if (curCP !== shownCP) {
+        var seen = fromCloud ? loadSeen() : null;
+        scanTo(curCP, false, seen && seen.cp > 0 && seen.cp < curCP ? seen.cp : null);
+    }
+    if (fromCloud) checkEvolution();
 
-    var sleepList = LOGS.filter(function (x) { return num(x.sleep) > 0; });
-    var weightList = LOGS.filter(function (x) { return num(x.weight) > 0; });
-
-    if (sleepList.length > 0) {
-        var sCount = Math.min(sleepList.length, 3), sSum = 0;
-        for (var i = 0; i < sCount; i++) sSum += num(sleepList[i].sleep);
-        var sAvg = sSum / sCount;
-        var sColor = sAvg >= 70 ? "var(--hud)" : (sAvg >= 60 ? "#ffe14d" : "var(--danger)");
-        $('avgSleep').innerHTML = '<span style="color:' + sColor + '">' + sAvg.toFixed(1) + '</span>';
-    } else { $('avgSleep').innerText = "--"; }
-
-    if (weightList.length > 0) {
-        var wCount = Math.min(weightList.length, 3), wSum = 0;
-        for (var j = 0; j < wCount; j++) wSum += num(weightList[j].weight);
-        var wAvg = wSum / wCount;
-        var currentW = num(weightList[0].weight);
-        var wColor = currentW < wAvg ? "var(--hud)" : (currentW > wAvg ? "var(--danger)" : "#fff");
-        $('avgWeight').innerHTML = '<span style="color:' + wColor + '">' + wAvg.toFixed(1) + ' kg</span>';
-    } else { $('avgWeight').innerText = "--"; }
 
     // 還有圖在排隊時，每 2 分鐘自動刷新一次
     clearTimeout(pollTimer);
@@ -898,8 +1079,8 @@ function drawCard(item, bg) {
     var HUD = '#3dff8b';
     if (item._cp == null) computeCP(LOGS);
     var gain = item._gain || 0;
-    var ti = actTier(item);
-    var AURA = TIER_COLORS[ti];
+    var info = actInfo(item);
+    var AURA = info.color;
 
     function glow(color, blur) { x.shadowColor = color; x.shadowBlur = blur; }
     function noGlow() { x.shadowBlur = 0; }
@@ -975,7 +1156,7 @@ function drawCard(item, bg) {
     x.fillStyle = HUD; x.font = '28px ' + MONO;
     x.fillText('POWER LEVEL  戰鬥力', 50, y + 112);
     x.textAlign = 'right'; x.fillStyle = AURA;
-    x.fillText('【' + ACT_TIERS[ti][1] + '】', W - 50, y + 112);
+    x.fillText('【' + info.label + '】', W - 50, y + 112);
     x.textAlign = 'left';
     // 大字：這次運動後的總戰鬥力（自動縮到放得下）
     var cpText = item._cp == null ? '—' : item._cp.toLocaleString();
@@ -1016,7 +1197,7 @@ function drawCard(item, bg) {
     // 底部
     x.fillStyle = HUD; x.fillRect(0, H - 10, W, 10);
     x.font = '28px ' + MONO;
-    x.fillText('Lv.' + curLv + ' 騎士', 50, H - 36);
+    x.fillText('【' + TITLES[titleIndex(item._cp || START_CP)][1] + '】', 50, H - 36);
     x.textAlign = 'right'; x.fillStyle = '#ff9d00';
     x.fillText('GOAL // ' + daysLeft() + ' DAYS LEFT', W - 50, H - 36);
     x.textAlign = 'left';
